@@ -32,7 +32,7 @@
 
 body {
     font-family: 'abeezee', sans-serif;
-    background-color: #f8f8f8;
+    background-color: #523939;
     margin: 0;
     padding: 0;
 }
@@ -41,7 +41,7 @@ body {
     max-width: 500px;
     margin: 0 auto;
     padding: 40px;
-    background-color: #ffffff;
+    background-color: #d8caca;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     animation: fadeIn 0.5s ease-in;
