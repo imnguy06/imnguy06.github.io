@@ -13,13 +13,20 @@
     <link href="https://fonts.googleapis.com/css?family=Courier+Prime:400,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
-        @keyframes bounce {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0); }
+        @keyframes zoom {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
-        .content img {
-            animation: bounce 0.5s infinite;
+    
+        .zoom-img {
+            animation: zoom 0.5s infinite;
         }
     </style>
     <script src="imnguyweb.js"></script>
@@ -39,13 +46,13 @@
             <p2>All about me:</p2>
             <div class="content">
                 <a href="imnguy06.github.io">
-                    <img class="icon" src="./icon/home.png"></a>
+                    <img class="icon zoom-img" src="./icon/home.png"></a>
                 <a href="https://www.facebook.com/imng.uy06">
-                    <img class="icon" src="./icon/facebook.png"></a>
+                    <img class="icon zoom-img" src="./icon/facebook.png"></a>
                 <a href="https://www.youtube.com/channel/UCI_mlroDPG-O_tuHpWke7Dw">
-                    <img class="icon" src="./icon/youtube.png"></a>
+                    <img class="icon zoom-img" src="./icon/youtube.png"></a>
                 <a href="https://github.com/imnguy06">
-                    <img class="icon" src="./icon/25231.png"></a>
+                    <img class="icon zoom-img" src="./icon/25231.png"></a>                
             </div>
         </div>
         <p class="footer">
