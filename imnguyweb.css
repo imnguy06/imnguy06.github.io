@@ -35,7 +35,7 @@ body
     align-items: center;
     flex-direction: column;
     width: 500px;
-    height: 600px;
+    height: 650px;
     background-color: rgba(0, 140, 255, 0.411);
 	border-radius: 15px 15px 15px 15px;
 }
@@ -70,7 +70,7 @@ body
     padding: 0.3em 0.6em;
     font-size: 24px;
     border: 2px solid #fffa;
-    font-family: monospace;
+    font-family: 'Annie Use Your Telescope', handwriting;
 }
 
 .content
@@ -91,7 +91,7 @@ body
     position: fixed;
     bottom: 0;
     width: 100%;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Annie Use Your Telescope', handwriting;
 }
 
 .footer a{
@@ -104,24 +104,25 @@ body
 }
 
 p1{
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 17px;
+    font-family: 'Annie Use Your Telescope', handwriting;
+    font-size: 20px;
     text-align: center;
 }
 
 p2{
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 20px;
+    font-family: 'Annie Use Your Telescope', handwriting;
+    font-size: 30px;
     text-align: center;
     color: #46c06f;
     width: 200px;
-    height: 25px;
+    height: 40px;
     background-color: rgba(194, 8, 185, 0.411);
 	border-radius: 10px 10px 10px 10px;
     font-weight: bold;
 }
 
 .job{
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Annie Use Your Telescope', handwriting;
     text-align: center;
+    font-size: 20px;
 }
