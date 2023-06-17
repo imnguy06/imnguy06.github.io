@@ -115,3 +115,11 @@ p2 {
     color: #999999;
     text-decoration: none;
 }
+
+.clock {
+    margin-top: 20px;
+    font-size: 32px;
+    font-weight: bold;
+    color: #555555;
+    animation: slideIn 0.5s ease-in;
+}
