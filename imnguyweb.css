@@ -101,7 +101,6 @@ p2 {
 .content a img {
     width: 40px;
     height: 40px;
-    animation: zoom 0.5s infinite;
 }
 
 .footer {
