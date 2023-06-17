@@ -39,11 +39,21 @@ body
     position: absolute;
     border-radius: 30px;
     background-clip: padding-box;
-    border: 3px solid transparent;
-    border-image-slice: 1;
-    border-image-source: linear-gradient(to right bottom, rgb(224, 133, 189), cyan);
-    margin: -10px;
+    animation: rainbowBorder 6s linear infinite;
 }
+
+@keyframes rainbowBorder {
+    0%   { box-shadow: 0 0 0 3px red; }
+    14%  { box-shadow: 0 0 0 3px orange; }
+    28%  { box-shadow: 0 0 0 3px yellow; }
+    42%  { box-shadow: 0 0 0 3px green; }
+    57%  { box-shadow: 0 0 0 3px blue; }
+    71%  { box-shadow: 0 0 0 3px indigo; }
+    85%  { box-shadow: 0 0 0 3px violet; }
+    100% { box-shadow: 0 0 0 3px red; }
+}
+
+
 
 .avatar
 {
