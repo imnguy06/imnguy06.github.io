@@ -111,15 +111,16 @@ p1{
 }
 
 p2{
-    font-family: 'Annie Use Your Telescope', handwriting;
-    font-size: 30px;
-    text-align: center;
-    color: #46c06f;
-    width: 200px;
-    height: 40px;
-    background-color: rgba(194, 8, 185, 0.411);
-	border-radius: 10px 10px 10px 10px;
+    display: inline-block;
+    font-size: 1.2em;
     font-weight: bold;
+    border-radius: 0.7em;
+    background-color: rgba(91, 204, 77, 0.6);
+    color: #e648d8;
+    padding: 0.3em 0.6em;
+    font-size: 20px;
+    border: 2px solid #fffa;
+    font-family: 'Annie Use Your Telescope', handwriting;
 }
 
 .job{
