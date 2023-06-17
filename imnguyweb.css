@@ -25,19 +25,24 @@ body
     color: #ffffff;
 }
 
-.box
-{
+.box {
     position: relative;
     top: 32px;
-	display: flex;
+    display: flex;
     gap: 32px;
-	justify-content: center;
+    justify-content: center;
     align-items: center;
     flex-direction: column;
     width: 500px;
     height: 650px;
     background-color: rgba(0, 140, 255, 0.411);
-	border-radius: 15px 15px 15px 15px;
+    position: absolute;
+    border-radius: 30px;
+    background-clip: padding-box;
+    border: 3px solid transparent;
+    border-image-slice: 1;
+    border-image-source: linear-gradient(to right bottom, rgb(224, 133, 189), cyan);
+    margin: -10px;
 }
 
 .avatar
