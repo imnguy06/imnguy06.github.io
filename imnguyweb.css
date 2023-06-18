@@ -30,6 +30,7 @@
     }
 }
 
+
 body {
     font-family: 'abeezee', sans-serif;
     margin: 0;
@@ -165,4 +166,24 @@ body {
 
 .toggle-button.dark-mode:hover {
     background-color: #ffffff;
+}
+
+.glow-icon-am{
+    box-shadow: 0 0 5px rgb(248, 86, 86);
+    border-radius: 10px;
+}
+
+.glow-icon-fb{
+    box-shadow: 0 0 5px rgb(70, 70, 221);
+    border-radius: 50%;
+}
+
+.glow-icon-yt{
+    box-shadow: 0 0 5px rgb(255, 0, 0);
+    border-radius: 50%;
+}
+
+.glow-icon-gh{
+    box-shadow: #000000 0 0 5px;
+    border-radius: 50%;
 }
