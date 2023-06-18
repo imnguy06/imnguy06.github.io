@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta property="og:type" content="website"/>
-    <meta property="og:title" content="imnguy"/>
-    <meta property="og:description" content="A hideout"/>
+    <meta property="og:title" content="imnguy">
+    <meta property="og:description" content="A hideout">
     <meta property="og:url" content="https://imnguy06.github.io">
     <title>imnguy</title>
     <link rel="stylesheet" type="text/css" href="imnguyweb.css">
@@ -17,19 +17,24 @@
 <body>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <div class="container">
+        <div class="toggle-container">
+            <button class="toggle-button" id="dark-mode-toggle">
+                <i id="dark-icon" class="fas fa-moon"></i>
+            </button>
+        </div>
         <div class="box">
             <img class="avatar" src="./icon/thumb-344733.png">
             <div class="name">
                 <text> @imnguy </text>
             </div>
-        </br>
+            <br>
             <div class="job">
                 Location: VietNam <iconify-icon icon="emojione-v1:flag-for-vietnam"></iconify-icon><br>
                 Job: Student 👨‍🎓
             </div>
-            </br>
-            <p1>Hi! My name's Uy, or you can also call me Jerry. I'm a student specializing in Biology.</p1> </br>
-        </br>
+            <br>
+            <p1>Hi! My name's Uy, or you can also call me Jerry. I'm a student specializing in Biology.</p1>
+            <br><br>
             <p2>My social media :</p2>
             <div class="content">
                 <a href="https://music.apple.com/vn/playlist/chill/pl.u-76oNljmsvBaXqgx">
@@ -50,5 +55,15 @@
         </p>
     </div>
     <script src="imnguyweb.js"></script>
+    <script>
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const body = document.body;
+    
+        darkModeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            darkModeToggle.classList.toggle('dark-mode');
+            darkModeToggle.innerHTML = body.classList.contains('dark-mode') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        });
+    </script>
 </body>
 </html>
