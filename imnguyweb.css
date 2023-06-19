@@ -40,7 +40,7 @@ body {
 .container {
     max-width: 500px;
     margin: 0 auto;
-    padding: 40px;
+    padding: 50px;
     border-radius: 30px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     animation: fadeIn 0.5s ease-in;
@@ -186,4 +186,26 @@ body {
 .glow-icon-gh{
     box-shadow: #000000 0 0 5px;
     border-radius: 50%;
+}
+
+.music-container{
+    position: absolute;
+    top: 100;
+    left: 2%;   
+}
+
+.music-button{
+    display: inline-block;
+    background-color: rgb(139, 136, 136);
+    border: none;
+    padding: 10px 11px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    border-radius: 20px;
+    font-family: 'abeezee', sans-serif;
+}
+
+.music-button:hover {
+    background-color: #726d6d;
 }
