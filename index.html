@@ -100,17 +100,24 @@
             loadingPage.classList.add('hidden');
             contentContainer.classList.remove('hidden');
         });
-    </script>
 
-    <script type="text/javascript" src="imnguyweb.js"></script>
-    <script>
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        const body = document.body;
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            const body = document.body;
+            const isDarkMode = localStorage.getItem('darkMode');
+            if (isDarkMode === 'true') {
+                body.classList.add('dark-mode');
+                darkModeToggle.classList.add('dark-mode');
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
 
-        darkModeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            darkModeToggle.classList.toggle('dark-mode');
-            darkModeToggle.innerHTML = body.classList.contains('dark-mode') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            darkModeToggle.addEventListener('click', () => {
+                body.classList.toggle('dark-mode');
+                darkModeToggle.classList.toggle('dark-mode');
+                darkModeToggle.innerHTML = body.classList.contains('dark-mode') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+                const isDarkModeEnabled = body.classList.contains('dark-mode');
+                localStorage.setItem('darkMode', isDarkModeEnabled);
+            });
         });
     </script>
 </body>
