@@ -40,7 +40,7 @@ body {
 .container {
     max-width: 500px;
     margin: 0 auto;
-    padding: 50px;
+    padding: 45.9px;
     border-radius: 30px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     animation: fadeIn 0.5s ease-in;
@@ -191,14 +191,14 @@ body {
 .music-container{
     position: absolute;
     top: 100;
-    left: 2%;   
+    left: 35%;   
 }
 
 .music-button{
     display: inline-block;
     background-color: rgb(139, 136, 136);
     border: none;
-    padding: 10px 11px;
+    padding: 9.5px 11px;
     font-size: 14px;
     cursor: pointer;
     transition: background-color 0.3s ease, color 0.3s ease;
@@ -208,6 +208,10 @@ body {
 
 .music-button:hover {
     background-color: #726d6d;
+}
+
+.music-button:active {
+    background-color: #333232;
 }
 
 .loading-page {
@@ -230,4 +234,30 @@ body {
 
 .hidden {
     display: none;
+}
+
+.chjll{
+    position: absolute;
+    top: 100;
+    left: 55%;
+}
+
+.chjll-button{
+    display: inline-block;
+    background-color: rgb(139, 136, 136);
+    border: none;
+    padding: 9.5px 11px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    border-radius: 20px;
+    font-family: 'abeezee', sans-serif;
+}
+
+.chjll-button:hover {
+    background-color: #726d6d;
+}
+
+.chjll-button:active {
+    background-color: #333232;
 }
