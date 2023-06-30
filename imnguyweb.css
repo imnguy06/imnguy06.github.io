@@ -60,6 +60,7 @@ body {
     border-radius: 50%;
     border: 3px solid #ffffff;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
 }
 
 .name {
