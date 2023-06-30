@@ -46,7 +46,7 @@ body {
     animation: fadeIn 0.5s ease-in;
     position: relative;
     transition: background-color 0.3s ease;
-    background-color: #bebbbb;
+    background-color: #f7e7f3;
 }
 
 .box {
@@ -120,7 +120,7 @@ p2 {
 
 body {
     --primary-color: #333;
-    --secondary-color: #dad6d9;
+    --secondary-color: #f7dcf0;
     --accent-color: #524f4f;
     color: var(--primary-color);
     background-color: var(--secondary-color);
@@ -188,32 +188,6 @@ body {
     border-radius: 50%;
 }
 
-.music-container{
-    position: absolute;
-    top: 100;
-    left: 35%;   
-}
-
-.music-button{
-    display: inline-block;
-    background-color: rgb(139, 136, 136);
-    border: none;
-    padding: 9.5px 11px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    border-radius: 20px;
-    font-family: 'abeezee', sans-serif;
-}
-
-.music-button:hover {
-    background-color: #726d6d;
-}
-
-.music-button:active {
-    background-color: #333232;
-}
-
 .loading-page {
     position: fixed;
     top: 0;
@@ -236,28 +210,3 @@ body {
     display: none;
 }
 
-.chjll{
-    position: absolute;
-    top: 100;
-    left: 55%;
-}
-
-.chjll-button{
-    display: inline-block;
-    background-color: rgb(139, 136, 136);
-    border: none;
-    padding: 9.5px 11px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    border-radius: 20px;
-    font-family: 'abeezee', sans-serif;
-}
-
-.chjll-button:hover {
-    background-color: #726d6d;
-}
-
-.chjll-button:active {
-    background-color: #333232;
-}
