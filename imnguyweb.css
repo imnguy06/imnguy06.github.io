@@ -46,7 +46,7 @@ body {
     animation: fadeIn 0.5s ease-in;
     position: relative;
     transition: background-color 0.3s ease;
-    background-color: #f7e7f3;
+    background-color: rgba(255, 182, 193, 0.6);
 }
 
 .box {
@@ -108,13 +108,13 @@ p2 {
 .footer {
     margin-top: 40px;
     font-size: 14px;
-    color: #999999;
+    color: #504e4e;
     text-align: center;
     animation: slideIn 0.5s ease-in;
 }
 
 .footer a {
-    color: #999999;
+    color: #222121;
     text-decoration: none;
 }
 
