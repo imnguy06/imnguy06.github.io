@@ -14,7 +14,7 @@
     <link href="https://fonts.bunny.net/css?family=abeezee:400|annie-use-your-telescope:400" rel="stylesheet" />
     <script src="imnguyweb.js" defer></script>
 </head>
-<body>
+<body data-page="card">
     <div class="loading-page">
         <i class="fas fa-spinner fa-spin loading-icon" aria-hidden="true"></i>
         <span class="visually-hidden">Đang tải nội dung</span>
@@ -32,10 +32,10 @@
                     <i class="fas fa-sliders-h" aria-hidden="true"></i>
                     Chỉnh sửa hồ sơ
                 </a>
-                <a class="account-button" href="#auth-card">
-                    <i class="fas fa-id-card" aria-hidden="true"></i>
-                    Tài khoản danh thiếp
-                </a>
+                <div class="session-info hidden" id="session-info">
+                    <span class="session-username" id="session-username" aria-live="polite"></span>
+                    <button class="danger-button" type="button" id="logout-button">Đăng xuất</button>
+                </div>
             </div>
         </div>
         <div class="main-grid">
@@ -73,46 +73,6 @@
                 </p>
             </section>
             <section class="workspace-column">
-                <div class="auth-card" id="auth-card">
-                    <h2>Nền tảng danh thiếp</h2>
-                    <p class="auth-status" id="auth-status">Bạn chưa đăng nhập.</p>
-                    <div class="auth-buttons">
-                        <button class="secondary-button" type="button" id="show-login">Đăng nhập</button>
-                        <button class="primary-button" type="button" id="show-register">Đăng ký</button>
-                        <button class="danger-button hidden" type="button" id="logout-button">Đăng xuất</button>
-                    </div>
-                    <form class="auth-form hidden" id="login-form" novalidate>
-                        <div class="form-group">
-                            <label for="login-username">Tên đăng nhập</label>
-                            <input type="text" id="login-username" autocomplete="username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="login-password">Mật khẩu</label>
-                            <input type="password" id="login-password" autocomplete="current-password" required>
-                        </div>
-                        <button class="primary-button" type="submit">Đăng nhập</button>
-                    </form>
-                    <form class="auth-form hidden" id="register-form" novalidate>
-                        <div class="form-group">
-                            <label for="register-username">Tên đăng nhập</label>
-                            <input type="text" id="register-username" autocomplete="username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-email">Email</label>
-                            <input type="email" id="register-email" autocomplete="email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-password">Mật khẩu</label>
-                            <input type="password" id="register-password" autocomplete="new-password" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-confirm-password">Nhập lại mật khẩu</label>
-                            <input type="password" id="register-confirm-password" autocomplete="new-password" required>
-                        </div>
-                        <button class="primary-button" type="submit">Tạo tài khoản</button>
-                    </form>
-                    <p class="auth-message" id="auth-message" role="status" aria-live="polite"></p>
-                </div>
                 <div class="card-builder hidden" id="card-builder">
                     <h2>Tạo danh thiếp của bạn</h2>
                     <p class="card-builder-hint">Điền thông tin bên dưới để tạo danh thiếp và lưu vào tài khoản.</p>
@@ -146,6 +106,26 @@
                                 <label for="card-website">Website</label>
                                 <input type="url" id="card-website" placeholder="https://">
                             </div>
+                            <div class="form-group full-width">
+                                <label for="social-select">Mạng xã hội</label>
+                                <div class="social-controls">
+                                    <select id="social-select">
+                                        <option value="">Chọn nền tảng</option>
+                                        <option value="facebook">Facebook</option>
+                                        <option value="instagram">Instagram</option>
+                                        <option value="tiktok">TikTok</option>
+                                        <option value="youtube">YouTube</option>
+                                        <option value="twitter">X (Twitter)</option>
+                                        <option value="linkedin">LinkedIn</option>
+                                        <option value="github">GitHub</option>
+                                        <option value="discord">Discord</option>
+                                    </select>
+                                    <input type="url" id="social-link" placeholder="https://" aria-label="Liên kết mạng xã hội">
+                                    <button class="secondary-button" type="button" id="add-social">Thêm</button>
+                                </div>
+                                <p class="social-hint">Chọn nền tảng và thêm liên kết của bạn. Bạn có thể thêm nhiều mạng xã hội và xóa khi không cần.</p>
+                                <ul class="social-list" id="social-list" aria-live="polite"></ul>
+                            </div>
                         </div>
                         <div class="form-actions">
                             <button class="primary-button" type="submit">Lưu danh thiếp</button>
@@ -161,6 +141,7 @@
                             <li id="preview-phone" class="hidden"></li>
                             <li id="preview-website" class="hidden"></li>
                         </ul>
+                        <ul class="preview-socials" id="preview-socials"></ul>
                     </div>
                 </div>
                 <div class="saved-cards hidden" id="saved-cards">

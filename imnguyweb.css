@@ -43,6 +43,15 @@ body {
     transition: color 0.3s ease, background-color 0.3s ease;
 }
 
+body.auth-page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 48px 16px;
+    background: linear-gradient(135deg, rgba(247, 220, 240, 0.9), rgba(173, 216, 230, 0.8));
+}
+
 body.config-page {
     min-height: 100vh;
     background: linear-gradient(135deg, rgba(247, 220, 240, 0.9), rgba(173, 216, 230, 0.8));
@@ -90,6 +99,17 @@ body.config-page {
     gap: 12px;
     align-items: center;
     flex-wrap: wrap;
+}
+
+.session-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.session-username {
+    font-weight: 600;
+    color: #3a3642;
 }
 
 .main-grid {
@@ -325,6 +345,36 @@ body.config-page {
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
 }
 
+.auth-wrapper {
+    width: 100%;
+    max-width: 1024px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+    align-items: center;
+}
+
+.auth-illustration {
+    display: flex;
+    justify-content: center;
+}
+
+.auth-illustration img {
+    width: 240px;
+    height: 240px;
+    object-fit: contain;
+    filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.2));
+    border-radius: 32px;
+    background: rgba(255, 255, 255, 0.65);
+    padding: 24px;
+}
+
+.auth-card h1 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 32px;
+}
+
 .auth-card h2,
 .card-builder h2,
 .saved-cards h2 {
@@ -377,6 +427,13 @@ body.config-page {
     font-size: 14px;
     font-weight: 600;
     min-height: 20px;
+}
+
+.auth-footer {
+    margin-top: 16px;
+    color: #5d5a63;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .auth-message[data-tone="error"],
@@ -474,6 +531,99 @@ body.config-page {
     grid-column: 1 / -1;
 }
 
+.social-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.social-controls select,
+.social-controls input {
+    flex: 1;
+    min-width: 180px;
+}
+
+.social-hint {
+    margin-top: 8px;
+    color: #6b6576;
+    font-size: 13px;
+}
+
+.social-list {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.social-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.social-item-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dark-mode .social-list li {
+    background: rgba(58, 54, 65, 0.9);
+}
+
+.social-list a {
+    color: inherit;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.social-remove {
+    border: none;
+    background: none;
+    color: #d9534f;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.preview-socials {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.preview-socials li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.preview-socials i {
+    font-size: 16px;
+}
+
+.dark-mode .preview-socials li {
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.preview-socials a {
+    color: #fff;
+    text-decoration: none;
+}
+
 .card-preview {
     margin-top: 28px;
     border-radius: 20px;
@@ -562,6 +712,33 @@ body.config-page {
     flex-direction: column;
     gap: 6px;
     word-break: break-all;
+}
+
+.card-item-socials {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.card-item-socials li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(161, 140, 209, 0.12);
+}
+
+.dark-mode .card-item-socials li {
+    background: rgba(207, 199, 226, 0.12);
+}
+
+.card-item-socials a {
+    color: inherit;
+    text-decoration: none;
 }
 
 .card-actions {
