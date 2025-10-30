@@ -20,41 +20,43 @@
     </div>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <div class="container hidden">
-        <div class="toggle-container">
-            <button class="toggle-button" id="dark-mode-toggle">
-                <i id="dark-icon" class="fas fa-moon"></i>
-            </button>
+        <div class="header-actions">
+            <div class="toggle-container">
+                <button class="toggle-button" id="dark-mode-toggle" aria-label="Toggle dark mode">
+                    <i id="dark-icon" class="fas fa-moon"></i>
+                </button>
+            </div>
+            <a class="config-button" id="config-button" href="config.html">
+                <i class="fas fa-sliders-h"></i>
+                Customize profile
+            </a>
         </div>
         <div class="box">
-            <img class="avatar" id="avatar-img" src="./icon/thumb-344733.png">
+            <img class="avatar" id="avatar-img" src="./icon/thumb-344733.png" alt="Profile avatar">
             <div class="name">
-                <text>@imnguy</text>
+                <span>@imnguy</span>
             </div>
-            <br>
             <div class="job">
-                Location: VietNam <iconify-icon icon="emojione-v1:flag-for-vietnam"></iconify-icon><br>
+                Location: VietNam <iconify-icon icon="emojione-v1:flag-for-vietnam" aria-hidden="true"></iconify-icon><br>
                 Job: Student 👨‍🎓
             </div>
-            <br>
-            <p1>Hi! My name's Uy, or you can also call me Jerry. I'm a student specializing in Biology and I'm a junior coder. And now, in 2024, i learn Traditional Medicine at University of Health Sciences.</p1>
-            <br><br>
-            <p2>My social media:</p2>
+            <p class="bio" id="bio-text" data-default-bio="Hi! My name's Uy, or you can also call me Jerry. I'm a student specializing in Biology and I'm a junior coder. And now, in 2024, I learn Traditional Medicine at University of Health Sciences.">Hi! My name's Uy, or you can also call me Jerry. I'm a student specializing in Biology and I'm a junior coder. And now, in 2024, I learn Traditional Medicine at University of Health Sciences.</p>
+            <p class="section-title">My social media:</p>
             <div class="content">
-                <a href="https://music.apple.com/vn/playlist/chill/pl.u-76oNljmsvBaXqgx">
-                    <img class="icon glow-icon-am" src="./icon/Apple_Music_icon.svg.png">
+                <a href="https://music.apple.com/vn/playlist/chill/pl.u-76oNljmsvBaXqgx" aria-label="Apple Music playlist">
+                    <img class="icon glow-icon-am" src="./icon/Apple_Music_icon.svg.png" alt="Apple Music icon">
                 </a>
-                <a href="https://www.facebook.com/imng.uy06">
-                    <img class="icon glow-icon-fb" src="./icon/facebook.png">
+                <a href="https://www.facebook.com/imng.uy06" aria-label="Facebook">
+                    <img class="icon glow-icon-fb" src="./icon/facebook.png" alt="Facebook icon">
                 </a>
-                <a href="https://www.youtube.com/channel/UCI_mlroDPG-O_tuHpWke7Dw">
-                    <img class="icon glow-icon-yt" src="./icon/youtube-round-2-icon-2048x2048-ayjtmdvq.png">
+                <a href="https://www.youtube.com/channel/UCI_mlroDPG-O_tuHpWke7Dw" aria-label="YouTube">
+                    <img class="icon glow-icon-yt" src="./icon/youtube-round-2-icon-2048x2048-ayjtmdvq.png" alt="YouTube icon">
                 </a>
-                <a href="https://github.com/imnguy06">
-                    <img class="icon glow-icon-gh" src="./icon/25231.png">
-                </a>                
+                <a href="https://github.com/imnguy06" aria-label="GitHub">
+                    <img class="icon glow-icon-gh" src="./icon/25231.png" alt="GitHub icon">
+                </a>
             </div>
-            <br>
-            <hr style="height:2px;width:300px;border-width:0;background-color:black">
+            <hr class="divider">
         </div>
         <p class="footer">
             Contact me: <a href="mailto:imng.uy17@gmail.com">imng.uy17@gmail.com</a><br>

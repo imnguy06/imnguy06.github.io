@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Customize profile | imnguy</title>
+    <link rel="stylesheet" type="text/css" href="imnguyweb.css">
+    <link rel="icon" type="image/x-icon" href="./icon/thumb-344733.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.bunny.net/css?family=abeezee:400|annie-use-your-telescope:400" rel="stylesheet" />
+    <script src="imnguyweb.js" defer></script>
+</head>
+<body class="config-page">
+    <div class="config-wrapper">
+        <a class="back-link" href="index.html">
+            <i class="fas fa-arrow-left"></i>
+            Back to profile
+        </a>
+        <div class="config-card">
+            <h1>Customize your hideout</h1>
+            <p class="config-subtitle">Upload an avatar, rewrite your introduction, and make the page feel like you.</p>
+            <form class="config-form" id="config-form">
+                <div class="form-group">
+                    <label for="avatar-input">Avatar</label>
+                    <div class="avatar-preview-wrapper">
+                        <img id="avatar-preview" class="avatar-preview" src="./icon/thumb-344733.png" alt="Avatar preview">
+                    </div>
+                    <input type="file" id="avatar-input" accept="image/*">
+                    <p class="form-hint">Square images (PNG, JPG, GIF) look best. Your image is only stored in this browser.</p>
+                </div>
+                <div class="form-group">
+                    <label for="bio-input">Bio</label>
+                    <textarea id="bio-input" rows="5" maxlength="600" placeholder="Write a short introduction"></textarea>
+                    <p class="form-hint">Leave the field empty to reuse the default introduction.</p>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="secondary-button" id="reset-config">Reset to defaults</button>
+                    <button type="submit" class="primary-button" id="save-config">Save changes</button>
+                </div>
+                <p class="config-note">Your preferences are saved locally on this device. Clearing your browser data will reset them.</p>
+                <p class="config-status" id="config-status" role="status" aria-live="polite"></p>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
