@@ -30,6 +30,12 @@
     }
 }
 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 body {
     font-family: 'abeezee', sans-serif;
     margin: 0;
@@ -41,6 +47,11 @@ body {
     color: var(--primary-color);
     background-color: var(--secondary-color);
     transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
 }
 
 body.auth-page {
@@ -74,9 +85,9 @@ body.config-page {
 }
 
 .container {
-    max-width: 1100px;
-    margin: 32px auto;
-    padding: 46px 40px 40px;
+    width: min(100%, 1100px);
+    margin: clamp(16px, 4vw, 32px) auto;
+    padding: clamp(24px, 6vw, 46px) clamp(16px, 5vw, 40px) clamp(24px, 6vw, 40px);
     border-radius: 30px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     animation: fadeIn 0.5s ease-in;
@@ -92,6 +103,7 @@ body.config-page {
     align-items: center;
     margin-bottom: 32px;
     gap: 16px;
+    flex-wrap: wrap;
 }
 
 .header-links {
@@ -954,6 +966,8 @@ body.config-page {
     padding: 28px;
     max-width: 480px;
     width: 100%;
+    max-height: min(640px, 90vh);
+    overflow-y: auto;
     box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
     position: relative;
 }
@@ -1103,11 +1117,77 @@ body.config-page {
 
 @media (max-width: 960px) {
     .container {
-        padding: 36px 24px;
+        padding: clamp(24px, 6vw, 36px) clamp(16px, 5vw, 28px);
     }
 
     .builder-layout {
         grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .header-actions {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        border-radius: 26px;
+    }
+
+    .header-actions {
+        gap: 12px;
+        text-align: center;
+    }
+
+    .toggle-container,
+    .header-links {
+        flex: 1 1 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .header-links {
+        width: 100%;
+        gap: 10px;
+    }
+
+    .session-info {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .preview-column,
+    .form-column {
+        gap: 20px;
+    }
+
+    .live-preview-card {
+        padding: 24px 20px;
+    }
+
+    .preview-avatar {
+        width: 132px;
+        height: 132px;
+    }
+
+    .form-grid {
+        gap: 16px;
+    }
+
+    .social-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .social-controls select,
+    .social-controls input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .card-item {
+        padding: 20px;
     }
 }
 
@@ -1117,10 +1197,26 @@ body.config-page {
         gap: 16px;
     }
 
+    .toggle-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .header-links {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
     .config-button,
     .account-button {
         width: 100%;
         justify-content: center;
+    }
+
+    .session-info {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
     }
 
     .form-actions {
@@ -1129,5 +1225,79 @@ body.config-page {
 
     .config-card {
         padding: 28px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    body.auth-page,
+    body.config-page {
+        padding: 32px 12px;
+    }
+
+    .container {
+        margin: 12px auto;
+        padding: 20px 16px;
+        border-radius: 20px;
+    }
+
+    .live-preview-card {
+        padding: 20px 16px;
+    }
+
+    .preview-avatar {
+        width: 112px;
+        height: 112px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .form-actions button {
+        width: 100%;
+    }
+
+    .card-item {
+        padding: 18px;
+    }
+
+    .session-info {
+        gap: 12px;
+    }
+
+    .session-info button {
+        width: 100%;
+    }
+
+    .card-item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .card-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .card-actions .action-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .saved-cards-list {
+        gap: 16px;
+    }
+
+    .modal {
+        align-items: flex-start;
+        padding: 16px;
+    }
+
+    .modal-content {
+        border-radius: 18px;
+        padding: 24px 20px;
     }
 }
