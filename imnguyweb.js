@@ -49,6 +49,336 @@ const DEFAULT_CARD_AVATAR = './icon/thumb-344733.png';
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
+// ----- Nén & giải nén -----
+const LZString = (() => {
+  const f = String.fromCharCode;
+  const keyStrUriSafe = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$';
+  const baseReverseDic = {};
+
+  function getBaseValue(alphabet, character) {
+    if (!baseReverseDic[alphabet]) {
+      baseReverseDic[alphabet] = {};
+      for (let i = 0; i < alphabet.length; i += 1) {
+        baseReverseDic[alphabet][alphabet.charAt(i)] = i;
+      }
+    }
+    return baseReverseDic[alphabet][character];
+  }
+
+  function compress(uncompressed, bitsPerChar, getCharFromInt) {
+    if (uncompressed == null) return '';
+    let i;
+    let value;
+    const contextDictionary = new Map();
+    const contextDictionaryToCreate = new Map();
+    let contextC = '';
+    let contextW = '';
+    const contextEnlargeIn = { value: 2 };
+    let contextDictSize = 3;
+    let contextNumBits = 2;
+    const contextData = [];
+    let contextDataVal = 0;
+    let contextDataPosition = 0;
+
+    const produceOutput = (valueToProduce, bits) => {
+      for (let j = 0; j < bits; j += 1) {
+        contextDataVal <<= 1;
+        contextDataVal |= valueToProduce & 1;
+        if (contextDataPosition === bitsPerChar - 1) {
+          contextDataPosition = 0;
+          contextData.push(getCharFromInt(contextDataVal));
+          contextDataVal = 0;
+        } else {
+          contextDataPosition += 1;
+        }
+        valueToProduce >>= 1;
+      }
+    };
+
+    const decreaseEnlargeIn = () => {
+      contextEnlargeIn.value -= 1;
+      if (contextEnlargeIn.value === 0) {
+        contextEnlargeIn.value = 2 ** contextNumBits;
+        contextNumBits += 1;
+      }
+    };
+
+    for (i = 0; i < uncompressed.length; i += 1) {
+      contextC = uncompressed.charAt(i);
+      if (!contextDictionary.has(contextC)) {
+        contextDictionary.set(contextC, contextDictSize);
+        contextDictSize += 1;
+        contextDictionaryToCreate.set(contextC, true);
+      }
+
+      const contextWC = contextW + contextC;
+      if (contextDictionary.has(contextWC)) {
+        contextW = contextWC;
+      } else {
+        if (contextDictionaryToCreate.has(contextW)) {
+          value = contextW.charCodeAt(0);
+          if (value < 256) {
+            produceOutput(0, contextNumBits);
+            produceOutput(value, 8);
+          } else {
+            produceOutput(1, contextNumBits);
+            produceOutput(value, 16);
+          }
+          decreaseEnlargeIn();
+          contextDictionaryToCreate.delete(contextW);
+        } else {
+          value = contextDictionary.get(contextW);
+          produceOutput(value, contextNumBits);
+          decreaseEnlargeIn();
+        }
+
+        contextDictionary.set(contextWC, contextDictSize);
+        contextDictSize += 1;
+        contextW = contextC;
+      }
+    }
+
+    if (contextW !== '') {
+      if (contextDictionaryToCreate.has(contextW)) {
+        value = contextW.charCodeAt(0);
+        if (value < 256) {
+          produceOutput(0, contextNumBits);
+          produceOutput(value, 8);
+        } else {
+          produceOutput(1, contextNumBits);
+          produceOutput(value, 16);
+        }
+        decreaseEnlargeIn();
+        contextDictionaryToCreate.delete(contextW);
+      } else {
+        value = contextDictionary.get(contextW);
+        produceOutput(value, contextNumBits);
+        decreaseEnlargeIn();
+      }
+    }
+
+    value = 2;
+    produceOutput(value, contextNumBits);
+
+    while (true) {
+      contextDataVal <<= 1;
+      if (contextDataPosition === bitsPerChar - 1) {
+        contextData.push(getCharFromInt(contextDataVal));
+        break;
+      }
+      contextDataPosition += 1;
+    }
+
+    return contextData.join('');
+  }
+
+  function decompress(length, resetValue, getNextValue) {
+    const dictionary = [];
+    let next;
+    let enlargeIn = 4;
+    let dictSize = 4;
+    let numBits = 3;
+    let entry = '';
+    const result = [];
+    let i;
+    let w;
+    let bits;
+    let resb;
+    let maxPower;
+    let power;
+    let c;
+
+    const data = {
+      value: getNextValue(0),
+      position: resetValue,
+      index: 1,
+    };
+
+    for (i = 0; i < 3; i += 1) {
+      dictionary[i] = i;
+    }
+
+    bits = 0;
+    maxPower = 2 ** 2;
+    power = 1;
+    while (power !== maxPower) {
+      resb = data.value & data.position;
+      data.position >>= 1;
+      if (data.position === 0) {
+        data.position = resetValue;
+        data.value = getNextValue(data.index);
+        data.index += 1;
+      }
+      bits |= (resb > 0 ? 1 : 0) * power;
+      power *= 2;
+    }
+
+    switch (bits) {
+      case 0:
+        bits = 0;
+        maxPower = 2 ** 8;
+        power = 1;
+        while (power !== maxPower) {
+          resb = data.value & data.position;
+          data.position >>= 1;
+          if (data.position === 0) {
+            data.position = resetValue;
+            data.value = getNextValue(data.index);
+            data.index += 1;
+          }
+          bits |= (resb > 0 ? 1 : 0) * power;
+          power *= 2;
+        }
+        c = f(bits);
+        break;
+      case 1:
+        bits = 0;
+        maxPower = 2 ** 16;
+        power = 1;
+        while (power !== maxPower) {
+          resb = data.value & data.position;
+          data.position >>= 1;
+          if (data.position === 0) {
+            data.position = resetValue;
+            data.value = getNextValue(data.index);
+            data.index += 1;
+          }
+          bits |= (resb > 0 ? 1 : 0) * power;
+          power *= 2;
+        }
+        c = f(bits);
+        break;
+      case 2:
+        return '';
+      default:
+        c = '';
+        break;
+    }
+
+    dictionary[3] = c;
+    w = c;
+    result.push(c);
+
+    while (true) {
+      if (data.index > length) {
+        return '';
+      }
+
+      bits = 0;
+      maxPower = 2 ** numBits;
+      power = 1;
+      while (power !== maxPower) {
+        resb = data.value & data.position;
+        data.position >>= 1;
+        if (data.position === 0) {
+          data.position = resetValue;
+          data.value = getNextValue(data.index);
+          data.index += 1;
+        }
+        bits |= (resb > 0 ? 1 : 0) * power;
+        power *= 2;
+      }
+
+      switch ((next = bits)) {
+        case 0:
+          bits = 0;
+          maxPower = 2 ** 8;
+          power = 1;
+          while (power !== maxPower) {
+            resb = data.value & data.position;
+            data.position >>= 1;
+            if (data.position === 0) {
+              data.position = resetValue;
+              data.value = getNextValue(data.index);
+              data.index += 1;
+            }
+            bits |= (resb > 0 ? 1 : 0) * power;
+            power *= 2;
+          }
+
+          dictionary[dictSize] = f(bits);
+          dictSize += 1;
+          next = dictSize - 1;
+          enlargeIn -= 1;
+          break;
+        case 1:
+          bits = 0;
+          maxPower = 2 ** 16;
+          power = 1;
+          while (power !== maxPower) {
+            resb = data.value & data.position;
+            data.position >>= 1;
+            if (data.position === 0) {
+              data.position = resetValue;
+              data.value = getNextValue(data.index);
+              data.index += 1;
+            }
+            bits |= (resb > 0 ? 1 : 0) * power;
+            power *= 2;
+          }
+
+          dictionary[dictSize] = f(bits);
+          dictSize += 1;
+          next = dictSize - 1;
+          enlargeIn -= 1;
+          break;
+        case 2:
+          return result.join('');
+        default:
+          break;
+      }
+
+      if (enlargeIn === 0) {
+        enlargeIn = 2 ** numBits;
+        numBits += 1;
+      }
+
+      if (dictionary[next]) {
+        entry = dictionary[next];
+      } else if (next === dictSize) {
+        entry = w + w.charAt(0);
+      } else {
+        return '';
+      }
+
+      result.push(entry);
+
+      dictionary[dictSize] = w + entry.charAt(0);
+      dictSize += 1;
+      enlargeIn -= 1;
+
+      w = entry;
+
+      if (enlargeIn === 0) {
+        enlargeIn = 2 ** numBits;
+        numBits += 1;
+      }
+    }
+  }
+
+  function compressToEncodedURIComponent(input) {
+    if (input == null) return '';
+    return compress(input, 6, (a) => keyStrUriSafe.charAt(a));
+  }
+
+  function decompressFromEncodedURIComponent(input) {
+    if (input == null) return '';
+    if (input === '') return null;
+    input = input.replace(/ /g, '+');
+
+    return decompress(input.length, 32, (index) => getBaseValue(keyStrUriSafe, input.charAt(index)));
+  }
+
+  return {
+    compressToEncodedURIComponent,
+    decompressFromEncodedURIComponent,
+  };
+})();
+
+const STORAGE_COMPRESSED_PREFIX = 'c1:';
+const STORAGE_JSON_PREFIX = 'j1:';
+const STORAGE_LEGACY_PREFIX = 'b1:';
+
 let currentUsername = localStorage.getItem(SESSION_KEY) || null;
 const sessionListeners = [];
 
@@ -86,10 +416,57 @@ function findUser(username) {
   return getUsers().find((user) => user.username.toLowerCase() === normalized) || null;
 }
 
+function parseStoredCards(raw) {
+  if (!raw) return [];
+  try {
+    if (raw.startsWith(STORAGE_COMPRESSED_PREFIX)) {
+      const compressed = raw.slice(STORAGE_COMPRESSED_PREFIX.length);
+      let json = '';
+      try {
+        json = LZString.decompressFromEncodedURIComponent(compressed);
+      } catch (error) {
+        console.error('Không thể giải nén dữ liệu danh thiếp đã lưu', error);
+        return [];
+      }
+      if (!json) {
+        throw new Error('Invalid compressed payload');
+      }
+      return JSON.parse(json);
+    }
+    if (raw.startsWith(STORAGE_JSON_PREFIX)) {
+      return JSON.parse(raw.slice(STORAGE_JSON_PREFIX.length));
+    }
+    if (raw.startsWith(STORAGE_LEGACY_PREFIX)) {
+      const legacyPayload = raw.slice(STORAGE_LEGACY_PREFIX.length);
+      const binary = atob(legacyPayload);
+      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+      const json = textDecoder.decode(bytes);
+      return JSON.parse(json);
+    }
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error('Không thể giải mã dữ liệu danh thiếp', error);
+    return [];
+  }
+}
+
+function serializeCards(cards) {
+  const json = JSON.stringify(cards);
+  try {
+    const compressed = LZString.compressToEncodedURIComponent(json);
+    if (compressed) {
+      return `${STORAGE_COMPRESSED_PREFIX}${compressed}`;
+    }
+  } catch (error) {
+    console.warn('Không thể nén danh thiếp, sử dụng JSON thuần', error);
+  }
+  return `${STORAGE_JSON_PREFIX}${json}`;
+}
+
 function loadCards(username) {
   try {
     const raw = localStorage.getItem(`${CARDS_KEY_PREFIX}${username}`);
-    return raw ? JSON.parse(raw) : [];
+    return parseStoredCards(raw);
   } catch (error) {
     console.error('Không thể đọc danh thiếp đã lưu', error);
     return [];
@@ -97,24 +474,91 @@ function loadCards(username) {
 }
 
 function saveCards(username, cards) {
-  localStorage.setItem(`${CARDS_KEY_PREFIX}${username}`, JSON.stringify(cards));
+  const storageKey = `${CARDS_KEY_PREFIX}${username}`;
+  const payload = serializeCards(cards);
+  try {
+    localStorage.setItem(storageKey, payload);
+  } catch (error) {
+    if (error && (error.name === 'QuotaExceededError' || error.code === 22 || error.code === 1014)) {
+      const quotaError = new Error('STORAGE_QUOTA_EXCEEDED');
+      quotaError.cause = error;
+      throw quotaError;
+    }
+    throw error;
+  }
 }
 
 function encodeCardData(card) {
   const json = JSON.stringify(card);
+  try {
+    const compressed = LZString.compressToEncodedURIComponent(json);
+    if (compressed) {
+      return `${STORAGE_COMPRESSED_PREFIX}${compressed}`;
+    }
+  } catch (error) {
+    console.warn('Không thể nén dữ liệu chia sẻ, fallback sang định dạng cũ', error);
+  }
+
   const bytes = textEncoder.encode(json);
   let binary = '';
   bytes.forEach((byte) => {
     binary += String.fromCharCode(byte);
   });
-  return encodeURIComponent(btoa(binary));
+  return `${STORAGE_LEGACY_PREFIX}${btoa(binary)}`;
 }
 
 function decodeCardData(encoded) {
-  const binary = atob(decodeURIComponent(encoded));
-  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-  const json = textDecoder.decode(bytes);
-  return JSON.parse(json);
+  if (!encoded) {
+    throw new Error('Thiếu dữ liệu danh thiếp.');
+  }
+
+  try {
+    let payload = encoded;
+    if (payload.includes('%')) {
+      try {
+        payload = decodeURIComponent(payload);
+      } catch (error) {
+        console.warn('Không thể giải mã phần trăm của dữ liệu chia sẻ', error);
+      }
+    }
+
+    if (payload.startsWith(STORAGE_COMPRESSED_PREFIX)) {
+      const compressed = payload.slice(STORAGE_COMPRESSED_PREFIX.length);
+      const json = LZString.decompressFromEncodedURIComponent(compressed);
+      if (!json) throw new Error('Không thể giải nén dữ liệu.');
+      return JSON.parse(json);
+    }
+
+    if (payload.startsWith(STORAGE_JSON_PREFIX)) {
+      return JSON.parse(payload.slice(STORAGE_JSON_PREFIX.length));
+    }
+
+    if (payload.startsWith(STORAGE_LEGACY_PREFIX)) {
+      const legacyPayload = payload.slice(STORAGE_LEGACY_PREFIX.length);
+      const binary = atob(legacyPayload);
+      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+      const json = textDecoder.decode(bytes);
+      return JSON.parse(json);
+    }
+
+    let maybeCompressed = null;
+    try {
+      maybeCompressed = LZString.decompressFromEncodedURIComponent(payload);
+    } catch (lzError) {
+      console.warn('Không thể giải nén dữ liệu chia sẻ bằng thuật toán mới', lzError);
+    }
+    if (maybeCompressed) {
+      return JSON.parse(maybeCompressed);
+    }
+
+    const binary = atob(payload);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    const json = textDecoder.decode(bytes);
+    return JSON.parse(json);
+  } catch (error) {
+    console.error('Không thể giải mã dữ liệu danh thiếp', error);
+    throw error;
+  }
 }
 
 function createShareUrl(card) {
@@ -878,7 +1322,17 @@ function initCardBuilder() {
         id: editingCardId,
         updatedAt: now,
       };
-      saveCards(currentUsername, cards);
+      try {
+        saveCards(currentUsername, cards);
+      } catch (error) {
+        if (error?.message === 'STORAGE_QUOTA_EXCEEDED') {
+          setFeedback(feedbackEl, 'Bộ nhớ trình duyệt đã đầy, không thể lưu danh thiếp. Hãy xóa bớt hoặc giảm kích thước ảnh.', 'error');
+        } else {
+          setFeedback(feedbackEl, 'Không thể lưu danh thiếp, vui lòng thử lại.', 'error');
+        }
+        console.error('Không thể cập nhật danh thiếp', error);
+        return;
+      }
       setFeedback(feedbackEl, 'Danh thiếp đã được cập nhật! Đang chuyển tới trang quản lý...', 'success');
       window.location.href = `${CARDS_PAGE_PATH}?highlight=${editingCardId}`;
       return;
@@ -890,7 +1344,17 @@ function initCardBuilder() {
       ...baseCard,
     };
     cards.push(newCard);
-    saveCards(currentUsername, cards);
+    try {
+      saveCards(currentUsername, cards);
+    } catch (error) {
+      if (error?.message === 'STORAGE_QUOTA_EXCEEDED') {
+        setFeedback(feedbackEl, 'Bộ nhớ trình duyệt đã đầy, không thể lưu danh thiếp mới. Hãy xóa bớt hoặc giảm kích thước ảnh.', 'error');
+      } else {
+        setFeedback(feedbackEl, 'Không thể lưu danh thiếp, vui lòng thử lại.', 'error');
+      }
+      console.error('Không thể lưu danh thiếp mới', error);
+      return;
+    }
     setFeedback(feedbackEl, 'Danh thiếp của bạn đã được lưu! Đang chuyển tới trang quản lý...', 'success');
     window.location.href = `${CARDS_PAGE_PATH}?highlight=${newCard.id}`;
   });
@@ -1008,7 +1472,13 @@ function initCardsLibrary() {
       const confirmed = window.confirm('Bạn có chắc chắn muốn xóa danh thiếp này?');
       if (!confirmed) return;
       const updatedCards = loadCards(username).filter((itemCard) => itemCard.id !== card.id);
-      saveCards(username, updatedCards);
+      try {
+        saveCards(username, updatedCards);
+      } catch (error) {
+        console.error('Không thể xóa danh thiếp', error);
+        setFeedback(feedbackEl, 'Không thể xóa danh thiếp, vui lòng thử lại.', 'error');
+        return;
+      }
       setFeedback(feedbackEl, 'Đã xóa danh thiếp.', 'info');
       renderCards(username);
     });
