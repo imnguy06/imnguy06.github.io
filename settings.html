@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:type" content="website"/>
+    <meta property="og:title" content="Profile configuration - imnguy">
+    <meta property="og:description" content="Customize the imnguy profile avatar and bio with a live preview.">
+    <meta property="og:url" content="https://imnguy06.github.io/settings.html">
+    <title>Customize profile | imnguy</title>
+    <link rel="stylesheet" type="text/css" href="imnguyweb.css">
+    <link rel="icon" type="image/x-icon" href="./icon/thumb-344733.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.bunny.net/css?family=abeezee:400|annie-use-your-telescope:400" rel="stylesheet" />
+</head>
+<body>
+    <div class="loading-page">
+        <i class="fas fa-spinner fa-spin loading-icon"></i>
+    </div>
+    <div class="settings-page hidden" id="settings-page">
+        <div class="toggle-container">
+            <button class="toggle-button" id="dark-mode-toggle">
+                <i id="dark-icon" class="fas fa-moon"></i>
+            </button>
+        </div>
+        <div class="settings-header">
+            <h1 class="settings-header__title">Profile configuration</h1>
+            <a class="settings-header__back" href="index.html"><i class="fas fa-arrow-left"></i> Back to profile</a>
+        </div>
+        <div class="settings-layout">
+            <div class="settings-card">
+                <div class="settings-card__section">
+                    <label class="settings-card__label" for="bio-input">Bio</label>
+                    <textarea id="bio-input" class="settings-card__textarea" rows="5" placeholder="Share something about yourself..."></textarea>
+                    <div class="settings-card__actions">
+                        <button type="button" id="preview-bio" class="settings-card__button">Preview text</button>
+                        <button type="button" id="reset-bio" class="settings-card__button">Reset</button>
+                    </div>
+                </div>
+                <div class="settings-card__section">
+                    <label class="settings-card__label" for="avatar-input">Avatar</label>
+                    <input type="file" id="avatar-input" class="settings-card__file" accept="image/*">
+                    <div class="settings-card__actions">
+                        <button type="button" id="preview-avatar" class="settings-card__button">Preview image</button>
+                        <button type="button" id="reset-avatar" class="settings-card__button">Use default</button>
+                    </div>
+                    <p class="settings-card__hint">For best results choose a square image (at least 200×200).</p>
+                </div>
+                <div class="settings-card__section">
+                    <div class="settings-card__actions">
+                        <button type="button" id="save-settings" class="settings-card__button primary">Save changes</button>
+                        <button type="button" id="discard-settings" class="settings-card__button">Discard preview</button>
+                    </div>
+                    <p class="settings-status" id="settings-status"></p>
+                </div>
+            </div>
+            <div class="preview-card">
+                <img id="preview-avatar-img" class="preview-card__avatar" src="./icon/thumb-344733.png" alt="Avatar preview">
+                <div class="preview-card__name">@imnguy</div>
+                <p class="preview-card__meta">Live preview</p>
+                <p id="preview-bio-text" class="preview-card__bio"></p>
+            </div>
+        </div>
+    </div>
+    <script>
+        window.addEventListener('load', function() {
+            const loadingPage = document.querySelector('.loading-page');
+            const settingsPage = document.getElementById('settings-page');
+
+            loadingPage.classList.add('hidden');
+            settingsPage.classList.remove('hidden');
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            const body = document.body;
+            const DEFAULT_AVATAR = './icon/thumb-344733.png';
+            const DARK_MODE_AVATAR = './icon/350083.png';
+            const DEFAULT_BIO = "Hi! My name's Uy, or you can also call me Jerry. I'm a student specializing in Biology and I'm a junior coder. And now, in 2024, I learn Traditional Medicine at University of Health Sciences.";
+
+            const bioInput = document.getElementById('bio-input');
+            const previewBioButton = document.getElementById('preview-bio');
+            const resetBioButton = document.getElementById('reset-bio');
+            const avatarInput = document.getElementById('avatar-input');
+            const previewAvatarButton = document.getElementById('preview-avatar');
+            const resetAvatarButton = document.getElementById('reset-avatar');
+            const saveSettingsButton = document.getElementById('save-settings');
+            const discardButton = document.getElementById('discard-settings');
+            const statusMessage = document.getElementById('settings-status');
+
+            const previewAvatar = document.getElementById('preview-avatar-img');
+            const previewBioText = document.getElementById('preview-bio-text');
+
+            let pendingAvatarDataUrl = null;
+            let appliedAvatarDataUrl = null;
+            let statusTimeoutId = null;
+
+            function setTheme(isDarkMode) {
+                if (isDarkMode) {
+                    body.classList.add('dark-mode');
+                    darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                    if (!pendingAvatarDataUrl && !localStorage.getItem('customAvatar')) {
+                        previewAvatar.src = DARK_MODE_AVATAR;
+                    }
+                } else {
+                    body.classList.remove('dark-mode');
+                    darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                    if (!pendingAvatarDataUrl && !localStorage.getItem('customAvatar')) {
+                        previewAvatar.src = DEFAULT_AVATAR;
+                    }
+                }
+            }
+
+            const prefersDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            const themeListener = (e) => {
+                if (!localStorage.getItem('theme')) {
+                    setTheme(e.matches);
+                }
+            };
+
+            if (prefersDarkQuery.addEventListener) {
+                prefersDarkQuery.addEventListener('change', themeListener);
+            } else if (prefersDarkQuery.addListener) {
+                prefersDarkQuery.addListener(themeListener);
+            }
+
+            const storedTheme = localStorage.getItem('theme');
+            if (storedTheme === null) {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                setTheme(prefersDark);
+            } else {
+                setTheme(storedTheme === 'dark');
+            }
+
+            darkModeToggle.addEventListener('click', () => {
+                body.classList.toggle('dark-mode');
+                darkModeToggle.classList.toggle('dark-mode');
+                const isDarkModeEnabled = body.classList.contains('dark-mode');
+                darkModeToggle.innerHTML = isDarkModeEnabled ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+                localStorage.setItem('theme', isDarkModeEnabled ? 'dark' : 'light');
+                if (!pendingAvatarDataUrl && !localStorage.getItem('customAvatar')) {
+                    previewAvatar.src = isDarkModeEnabled ? DARK_MODE_AVATAR : DEFAULT_AVATAR;
+                }
+            });
+
+            function applyStoredBio() {
+                const storedBio = localStorage.getItem('customBio');
+                const bioToUse = storedBio || DEFAULT_BIO;
+                bioInput.value = bioToUse;
+                previewBioText.textContent = bioToUse;
+            }
+
+            function applyStoredAvatar() {
+                const storedAvatar = localStorage.getItem('customAvatar');
+                appliedAvatarDataUrl = storedAvatar;
+                if (pendingAvatarDataUrl) {
+                    previewAvatar.src = pendingAvatarDataUrl;
+                } else if (storedAvatar) {
+                    previewAvatar.src = storedAvatar;
+                } else {
+                    const isDarkModeEnabled = body.classList.contains('dark-mode');
+                    previewAvatar.src = isDarkModeEnabled ? DARK_MODE_AVATAR : DEFAULT_AVATAR;
+                }
+            }
+
+            function showStatus(message) {
+                if (statusTimeoutId !== null) {
+                    clearTimeout(statusTimeoutId);
+                    statusTimeoutId = null;
+                }
+                statusMessage.textContent = message;
+                statusTimeoutId = window.setTimeout(() => {
+                    statusMessage.textContent = '';
+                    statusTimeoutId = null;
+                }, 3200);
+            }
+
+            previewBioButton.addEventListener('click', () => {
+                const newBio = bioInput.value.trim();
+                if (newBio.length === 0) {
+                    showStatus('Bio cannot be empty.');
+                    return;
+                }
+                previewBioText.textContent = newBio;
+                showStatus('Bio preview updated.');
+            });
+
+            resetBioButton.addEventListener('click', () => {
+                bioInput.value = DEFAULT_BIO;
+                previewBioText.textContent = DEFAULT_BIO;
+                showStatus('Bio reset to default.');
+            });
+
+            avatarInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) {
+                    pendingAvatarDataUrl = null;
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    avatarInput.value = '';
+                    pendingAvatarDataUrl = null;
+                    showStatus('Please select a valid image file.');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const result = e.target?.result;
+                    if (typeof result === 'string') {
+                        pendingAvatarDataUrl = result;
+                        showStatus('Avatar ready for preview. Click "Preview image" to view it.');
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            previewAvatarButton.addEventListener('click', () => {
+                if (pendingAvatarDataUrl) {
+                    previewAvatar.src = pendingAvatarDataUrl;
+                    showStatus('Avatar preview updated.');
+                } else if (appliedAvatarDataUrl) {
+                    previewAvatar.src = appliedAvatarDataUrl;
+                    showStatus('Showing the current avatar.');
+                } else {
+                    const isDarkModeEnabled = body.classList.contains('dark-mode');
+                    previewAvatar.src = isDarkModeEnabled ? DARK_MODE_AVATAR : DEFAULT_AVATAR;
+                    showStatus('Showing the default avatar.');
+                }
+            });
+
+            resetAvatarButton.addEventListener('click', () => {
+                pendingAvatarDataUrl = null;
+                avatarInput.value = '';
+                localStorage.removeItem('customAvatar');
+                appliedAvatarDataUrl = null;
+                const isDarkModeEnabled = body.classList.contains('dark-mode');
+                previewAvatar.src = isDarkModeEnabled ? DARK_MODE_AVATAR : DEFAULT_AVATAR;
+                showStatus('Avatar reset to default.');
+            });
+
+            saveSettingsButton.addEventListener('click', () => {
+                const newBio = bioInput.value.trim();
+                if (newBio.length === 0) {
+                    showStatus('Bio cannot be empty when saving.');
+                    return;
+                }
+
+                localStorage.setItem('customBio', newBio);
+                previewBioText.textContent = newBio;
+
+                if (pendingAvatarDataUrl) {
+                    localStorage.setItem('customAvatar', pendingAvatarDataUrl);
+                    appliedAvatarDataUrl = pendingAvatarDataUrl;
+                    previewAvatar.src = pendingAvatarDataUrl;
+                    pendingAvatarDataUrl = null;
+                    avatarInput.value = '';
+                }
+
+                showStatus('Changes saved! Return to your profile to see them live.');
+            });
+
+            discardButton.addEventListener('click', () => {
+                pendingAvatarDataUrl = null;
+                avatarInput.value = '';
+                applyStoredBio();
+                applyStoredAvatar();
+                showStatus('Preview discarded. Stored settings restored.');
+            });
+
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'customBio') {
+                    applyStoredBio();
+                }
+                if (event.key === 'customAvatar') {
+                    applyStoredAvatar();
+                }
+                if (event.key === 'theme') {
+                    const storedThemeValue = localStorage.getItem('theme');
+                    if (storedThemeValue === 'dark') {
+                        body.classList.add('dark-mode');
+                        darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                    } else {
+                        body.classList.remove('dark-mode');
+                        darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                    }
+                    if (!pendingAvatarDataUrl && !localStorage.getItem('customAvatar')) {
+                        const isDarkModeEnabled = body.classList.contains('dark-mode');
+                        previewAvatar.src = isDarkModeEnabled ? DARK_MODE_AVATAR : DEFAULT_AVATAR;
+                    }
+                }
+            });
+
+            applyStoredBio();
+            applyStoredAvatar();
+        });
+    </script>
+</body>
+</html>

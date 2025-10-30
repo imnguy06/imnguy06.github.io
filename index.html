@@ -12,7 +12,6 @@
     <link rel="icon" type="image/x-icon" href="./icon/thumb-344733.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://fonts.bunny.net/css?family=abeezee:400|annie-use-your-telescope:400" rel="stylesheet" />
-    <script type="text/javascript" src="imnguyweb.js"></script>
 </head>
 <body>
     <div class="loading-page">
@@ -26,7 +25,7 @@
             </button>
         </div>
         <div class="box">
-            <img class="avatar" id="avatar-img" src="./icon/thumb-344733.png">
+            <img class="avatar" id="avatar-img" src="./icon/thumb-344733.png" alt="Profile avatar">
             <div class="name">
                 <text>@imnguy</text>
             </div>
@@ -36,9 +35,9 @@
                 Job: Student 👨‍🎓
             </div>
             <br>
-            <p1>Hi! My name's Uy, or you can also call me Jerry. I'm a student specializing in Biology and I'm a junior coder. And now, in 2024, i learn Traditional Medicine at University of Health Sciences.</p1>
+            <p class="bio-text" id="bio-text">Hi! My name's Uy, or you can also call me Jerry. I'm a student specializing in Biology and I'm a junior coder. And now, in 2024, I learn Traditional Medicine at University of Health Sciences.</p>
             <br><br>
-            <p2>My social media:</p2>
+            <p class="social-heading">My social media:</p>
             <div class="content">
                 <a href="https://music.apple.com/vn/playlist/chill/pl.u-76oNljmsvBaXqgx">
                     <img class="icon glow-icon-am" src="./icon/Apple_Music_icon.svg.png">
@@ -55,6 +54,11 @@
             </div>
             <br>
             <hr style="height:2px;width:300px;border-width:0;background-color:black">
+        </div>
+        <div class="settings-entry">
+            <h2 class="settings-entry__title">Customize your profile</h2>
+            <p class="settings-entry__copy">Tune your avatar and bio on the dedicated configuration page and preview the changes before applying them.</p>
+            <a class="settings-entry__button" href="settings.html">Open configuration</a>
         </div>
         <p class="footer">
             Contact me: <a href="mailto:imng.uy17@gmail.com">imng.uy17@gmail.com</a><br>
@@ -73,40 +77,100 @@
         document.addEventListener('DOMContentLoaded', function() {
             const darkModeToggle = document.getElementById('dark-mode-toggle');
             const body = document.body;
+            const DEFAULT_AVATAR = './icon/thumb-344733.png';
+            const DARK_MODE_AVATAR = './icon/350083.png';
+            const DEFAULT_BIO = "Hi! My name's Uy, or you can also call me Jerry. I'm a student specializing in Biology and I'm a junior coder. And now, in 2024, I learn Traditional Medicine at University of Health Sciences.";
+
+            const bioText = document.getElementById('bio-text');
+            const avatarImg = document.getElementById('avatar-img');
+
             function setTheme(isDarkMode) {
                 if (isDarkMode) {
                     body.classList.add('dark-mode');
                     darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-                    document.getElementById('avatar-img').src = './icon/350083.png';
+                    if (!localStorage.getItem('customAvatar')) {
+                        avatarImg.src = DARK_MODE_AVATAR;
+                    }
                 } else {
                     body.classList.remove('dark-mode');
                     darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-                    document.getElementById('avatar-img').src = './icon/thumb-344733.png';
+                    if (!localStorage.getItem('customAvatar')) {
+                        avatarImg.src = DEFAULT_AVATAR;
+                    }
                 }
             }
 
             const prefersDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            prefersDarkQuery.addEventListener('change', (e) => {
+            const themeListener = (e) => {
                 if (!localStorage.getItem('theme')) {
                     setTheme(e.matches);
                 }
-            });
+            };
 
-            let curruentTheme = localStorage.getItem('theme');
-
-            if (curruentTheme === null) {
-                curruentTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            if (prefersDarkQuery.addEventListener) {
+                prefersDarkQuery.addEventListener('change', themeListener);
+            } else if (prefersDarkQuery.addListener) {
+                prefersDarkQuery.addListener(themeListener);
             }
 
-            setTheme(curruentTheme === 'dark');
+            const storedTheme = localStorage.getItem('theme');
+            if (storedTheme === null) {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                setTheme(prefersDark);
+            } else {
+                setTheme(storedTheme === 'dark');
+            }
 
             darkModeToggle.addEventListener('click', () => {
                 body.classList.toggle('dark-mode');
                 darkModeToggle.classList.toggle('dark-mode');
                 darkModeToggle.innerHTML = body.classList.contains('dark-mode') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
                 const isDarkModeEnabled = body.classList.contains('dark-mode');
-                localStorage.setItem('darkMode', isDarkModeEnabled);
-                document.getElementById('avatar-img').src = isDarkModeEnabled ? './icon/350083.png' : './icon/thumb-344733.png';
+                localStorage.setItem('theme', isDarkModeEnabled ? 'dark' : 'light');
+                if (!localStorage.getItem('customAvatar')) {
+                    avatarImg.src = isDarkModeEnabled ? DARK_MODE_AVATAR : DEFAULT_AVATAR;
+                }
+            });
+
+            function applySavedBio() {
+                const storedBio = localStorage.getItem('customBio');
+                const bioToUse = storedBio || DEFAULT_BIO;
+                bioText.textContent = bioToUse;
+            }
+
+            function applySavedAvatar() {
+                const storedAvatar = localStorage.getItem('customAvatar');
+                if (storedAvatar) {
+                    avatarImg.src = storedAvatar;
+                } else {
+                    const isDarkModeEnabled = body.classList.contains('dark-mode');
+                    avatarImg.src = isDarkModeEnabled ? DARK_MODE_AVATAR : DEFAULT_AVATAR;
+                }
+            }
+
+            applySavedBio();
+            applySavedAvatar();
+
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'customBio') {
+                    applySavedBio();
+                }
+                if (event.key === 'customAvatar') {
+                    applySavedAvatar();
+                }
+                if (event.key === 'theme') {
+                    const storedThemeValue = localStorage.getItem('theme');
+                    if (storedThemeValue === 'dark') {
+                        body.classList.add('dark-mode');
+                        darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                    } else {
+                        body.classList.remove('dark-mode');
+                        darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                    }
+                    if (!localStorage.getItem('customAvatar')) {
+                        applySavedAvatar();
+                    }
+                }
             });
         });
     </script>
