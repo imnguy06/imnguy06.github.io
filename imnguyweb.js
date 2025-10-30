@@ -1,47 +1,93 @@
-window.addEventListener('load', function() {
-            const loadingPage = document.querySelector('.loading-page');
-            const contentContainer = document.querySelector('.container');
+// ===============================
+// imnguyweb.js — Cập nhật 2025-10-30
+// ===============================
 
-            loadingPage.classList.add('hidden');
-            contentContainer.classList.remove('hidden');
-        });
+// ----- Dark mode -----
+const darkModeToggle = document.getElementById('dark-mode-toggle');
+if (darkModeToggle) {
+  darkModeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('dark-mode', isDark ? 'enabled' : 'disabled');
+    document.getElementById('dark-icon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+  });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const darkModeToggle = document.getElementById('dark-mode-toggle');
-            const body = document.body;
-            function setTheme(isDarkMode) {
-                if (isDarkMode) {
-                    body.classList.add('dark-mode');
-                    darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-                    document.getElementById('avatar-img').src = './icon/350083.png';
-                } else {
-                    body.classList.remove('dark-mode');
-                    darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-                    document.getElementById('avatar-img').src = './icon/thumb-344733.png';
-                }
-            }
+  if (localStorage.getItem('dark-mode') === 'enabled') {
+    document.body.classList.add('dark-mode');
+    document.getElementById('dark-icon').className = 'fas fa-sun';
+  }
+}
 
-            const prefersDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            prefersDarkQuery.addEventListener('change', (e) => {
-                if (!localStorage.getItem('theme')) {
-                    setTheme(e.matches);
-                }
-            });
+// ----- Avatar & Bio -----
+const AVATAR_KEY = 'profile.avatar';
+const BIO_KEY = 'profile.bio';
 
-            let curruentTheme = localStorage.getItem('theme');
+// Trang index.html — Hiển thị avatar & bio đã lưu
+window.addEventListener('DOMContentLoaded', () => {
+  const avatarImg = document.getElementById('avatar-img');
+  const bioText = document.getElementById('bio-text');
 
-            if (curruentTheme === null) {
-                curruentTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            }
+  const savedAvatar = localStorage.getItem(AVATAR_KEY);
+  const savedBio = localStorage.getItem(BIO_KEY);
 
-            setTheme(curruentTheme === 'dark');
+  if (savedAvatar && avatarImg) avatarImg.src = savedAvatar;
+  if (savedBio && bioText) bioText.textContent = savedBio;
+});
 
-            darkModeToggle.addEventListener('click', () => {
-                body.classList.toggle('dark-mode');
-                darkModeToggle.classList.toggle('dark-mode');
-                darkModeToggle.innerHTML = body.classList.contains('dark-mode') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-                const isDarkModeEnabled = body.classList.contains('dark-mode');
-                localStorage.setItem('darkMode', isDarkModeEnabled);
-                document.getElementById('avatar-img').src = isDarkModeEnabled ? './icon/350083.png' : './icon/thumb-344733.png';
-            });
-        });
+// Trang config.html — Form lưu avatar & bio
+const configForm = document.getElementById('config-form');
+if (configForm) {
+  const avatarInput = document.getElementById('avatar-input');
+  const avatarPreview = document.getElementById('avatar-preview');
+  const bioInput = document.getElementById('bio-input');
+  const statusEl = document.getElementById('config-status');
+  const resetBtn = document.getElementById('reset-config');
+
+  // Hiển thị sẵn dữ liệu đã lưu
+  const savedAvatar = localStorage.getItem(AVATAR_KEY);
+  const savedBio = localStorage.getItem(BIO_KEY);
+  if (savedAvatar) avatarPreview.src = savedAvatar;
+  if (savedBio) bioInput.value = savedBio;
+
+  // Khi chọn ảnh mới
+  avatarInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => (avatarPreview.src = reader.result);
+    reader.readAsDataURL(file);
+  });
+
+  // Khi nhấn “Save changes”
+  configForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (avatarPreview.src.startsWith('data:image')) {
+      localStorage.setItem(AVATAR_KEY, avatarPreview.src);
+    }
+    localStorage.setItem(BIO_KEY, bioInput.value);
+    statusEl.textContent = 'Đã lưu thành công!';
+    statusEl.style.color = 'green';
+  });
+
+  // Khi nhấn “Reset to defaults”
+  resetBtn.addEventListener('click', () => {
+    localStorage.removeItem(AVATAR_KEY);
+    localStorage.removeItem(BIO_KEY);
+    avatarPreview.src = './icon/thumb-344733.png';
+    bioInput.value = '';
+    statusEl.textContent = 'Đã đặt lại mặc định.';
+    statusEl.style.color = 'orange';
+  });
+}
+
+// ----- Loading animation -----
+window.addEventListener('load', () => {
+  const loadingPage = document.querySelector('.loading-page');
+  const container = document.querySelector('.container');
+  if (loadingPage && container) {
+    setTimeout(() => {
+      loadingPage.classList.add('hidden');
+      container.classList.remove('hidden');
+    }, 500);
+  }
+});
