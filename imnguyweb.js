@@ -656,6 +656,11 @@ function updatePreviewContent(previewRoot, card) {
   if (!previewRoot) return;
   const avatarImg = previewRoot.querySelector('.preview-avatar img');
   if (avatarImg) {
+    if (card.avatar && /^https?:\/\//.test(card.avatar)) {
+      avatarImg.crossOrigin = 'anonymous';
+    } else {
+      avatarImg.removeAttribute('crossorigin');
+    }
     avatarImg.src = resolveCardAvatar(card.avatar);
     avatarImg.alt = card.title ? `Ảnh đại diện của ${card.title}` : 'Ảnh đại diện danh thiếp';
   }
@@ -749,7 +754,7 @@ function createPreviewElement(card, { append = true } = {}) {
 
 async function downloadCardAsImage(card, sourceElement) {
   if (typeof window.html2canvas !== 'function') {
-    throw new Error('html2canvas chưa được tải.');
+    throw new Error('html2canvas chưa sẵn sàng');
   }
 
   const element = sourceElement || createPreviewElement(card);
@@ -764,6 +769,10 @@ async function downloadCardAsImage(card, sourceElement) {
     const canvas = await window.html2canvas(element, {
       backgroundColor: null,
       scale: window.devicePixelRatio > 1 ? 2 : 1.5,
+      useCORS: true,
+      allowTaint: false,
+      imageTimeout: 7000,
+      removeContainer: true,
     });
     const link = document.createElement('a');
     const safeTitle = card.title?.trim() || 'danh-thiep';
@@ -1288,7 +1297,7 @@ function initCardBuilder() {
   if (downloadPreviewBtn) {
     downloadPreviewBtn.addEventListener('click', async () => {
       try {
-        await downloadCardAsImage(getCurrentCardData(), previewCard);
+        await downloadCardAsImage(getCurrentCardData());
         setFeedback(previewFeedbackEl, 'Ảnh danh thiếp đã được tải xuống.', 'success');
       } catch (error) {
         console.error(error);
