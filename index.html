@@ -16,7 +16,8 @@
 </head>
 <body>
     <div class="loading-page">
-        <i class="fas fa-spinner fa-spin loading-icon"></i>
+        <i class="fas fa-spinner fa-spin loading-icon" aria-hidden="true"></i>
+        <span class="visually-hidden">Đang tải nội dung</span>
     </div>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <div class="container hidden">
@@ -26,42 +27,157 @@
                     <i id="dark-icon" class="fas fa-moon"></i>
                 </button>
             </div>
-            <a class="config-button" id="config-button" href="config.html">
-                <i class="fas fa-sliders-h"></i>
-                Chỉnh sửa hồ sơ
-            </a>
+            <div class="header-links">
+                <a class="config-button" id="config-button" href="config.html">
+                    <i class="fas fa-sliders-h" aria-hidden="true"></i>
+                    Chỉnh sửa hồ sơ
+                </a>
+                <a class="account-button" href="#auth-card">
+                    <i class="fas fa-id-card" aria-hidden="true"></i>
+                    Tài khoản danh thiếp
+                </a>
+            </div>
         </div>
-        <div class="box">
-            <img class="avatar" id="avatar-img" src="./icon/thumb-344733.png" alt="Profile avatar">
-            <div class="name">
-                <span>@imnguy</span>
-            </div>
-            <div class="job">
-                Location: VietNam <iconify-icon icon="emojione-v1:flag-for-vietnam" aria-hidden="true"></iconify-icon><br>
-                Job: Student 👨‍🎓
-            </div>
-            <p class="bio" id="bio-text" data-default-bio="Giới thiệu bản thân mình!!">Giới thiệu bản thân mình!!</p>
-            <p class="section-title">My social media:</p>
-            <div class="content">
-                <a href="https://music.apple.com/vn/playlist/chill/pl.u-76oNljmsvBaXqgx" aria-label="Apple Music playlist">
-                    <img class="icon glow-icon-am" src="./icon/Apple_Music_icon.svg.png" alt="Apple Music icon">
-                </a>
-                <a href="https://www.facebook.com/imng.uy06" aria-label="Facebook">
-                    <img class="icon glow-icon-fb" src="./icon/facebook.png" alt="Facebook icon">
-                </a>
-                <a href="https://www.youtube.com/channel/UCI_mlroDPG-O_tuHpWke7Dw" aria-label="YouTube">
-                    <img class="icon glow-icon-yt" src="./icon/youtube-round-2-icon-2048x2048-ayjtmdvq.png" alt="YouTube icon">
-                </a>
-                <a href="https://github.com/imnguy06" aria-label="GitHub">
-                    <img class="icon glow-icon-gh" src="./icon/25231.png" alt="GitHub icon">
-                </a>
-            </div>
-            <hr class="divider">
+        <div class="main-grid">
+            <section class="profile-column">
+                <div class="box">
+                    <img class="avatar" id="avatar-img" src="./icon/thumb-344733.png" alt="Profile avatar">
+                    <div class="name">
+                        <span>@imnguy</span>
+                    </div>
+                    <div class="job" id="profile-job-container" data-default-location="VietNam 🇻🇳" data-default-job="Student 👨‍🎓">
+                        <span id="profile-location">Location: VietNam <iconify-icon icon="emojione-v1:flag-for-vietnam" aria-hidden="true"></iconify-icon></span><br>
+                        <span id="profile-job">Job: Student 👨‍🎓</span>
+                    </div>
+                    <p class="bio" id="bio-text" data-default-bio="Giới thiệu bản thân mình!!">Giới thiệu bản thân mình!!</p>
+                    <p class="section-title">My social media:</p>
+                    <div class="content">
+                        <a href="https://music.apple.com/vn/playlist/chill/pl.u-76oNljmsvBaXqgx" aria-label="Apple Music playlist">
+                            <img class="icon glow-icon-am" src="./icon/Apple_Music_icon.svg.png" alt="Apple Music icon">
+                        </a>
+                        <a href="https://www.facebook.com/imng.uy06" aria-label="Facebook">
+                            <img class="icon glow-icon-fb" src="./icon/facebook.png" alt="Facebook icon">
+                        </a>
+                        <a href="https://www.youtube.com/channel/UCI_mlroDPG-O_tuHpWke7Dw" aria-label="YouTube">
+                            <img class="icon glow-icon-yt" src="./icon/youtube-round-2-icon-2048x2048-ayjtmdvq.png" alt="YouTube icon">
+                        </a>
+                        <a href="https://github.com/imnguy06" aria-label="GitHub">
+                            <img class="icon glow-icon-gh" src="./icon/25231.png" alt="GitHub icon">
+                        </a>
+                    </div>
+                    <hr class="divider">
+                </div>
+                <p class="footer">
+                    Contact me: <a href="mailto:imng.uy17@gmail.com">imng.uy17@gmail.com</a><br>
+                    &copy; 2023 NguyenUy, All rights reserved.
+                </p>
+            </section>
+            <section class="workspace-column">
+                <div class="auth-card" id="auth-card">
+                    <h2>Nền tảng danh thiếp</h2>
+                    <p class="auth-status" id="auth-status">Bạn chưa đăng nhập.</p>
+                    <div class="auth-buttons">
+                        <button class="secondary-button" type="button" id="show-login">Đăng nhập</button>
+                        <button class="primary-button" type="button" id="show-register">Đăng ký</button>
+                        <button class="danger-button hidden" type="button" id="logout-button">Đăng xuất</button>
+                    </div>
+                    <form class="auth-form hidden" id="login-form" novalidate>
+                        <div class="form-group">
+                            <label for="login-username">Tên đăng nhập</label>
+                            <input type="text" id="login-username" autocomplete="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Mật khẩu</label>
+                            <input type="password" id="login-password" autocomplete="current-password" required>
+                        </div>
+                        <button class="primary-button" type="submit">Đăng nhập</button>
+                    </form>
+                    <form class="auth-form hidden" id="register-form" novalidate>
+                        <div class="form-group">
+                            <label for="register-username">Tên đăng nhập</label>
+                            <input type="text" id="register-username" autocomplete="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">Email</label>
+                            <input type="email" id="register-email" autocomplete="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Mật khẩu</label>
+                            <input type="password" id="register-password" autocomplete="new-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-confirm-password">Nhập lại mật khẩu</label>
+                            <input type="password" id="register-confirm-password" autocomplete="new-password" required>
+                        </div>
+                        <button class="primary-button" type="submit">Tạo tài khoản</button>
+                    </form>
+                    <p class="auth-message" id="auth-message" role="status" aria-live="polite"></p>
+                </div>
+                <div class="card-builder hidden" id="card-builder">
+                    <h2>Tạo danh thiếp của bạn</h2>
+                    <p class="card-builder-hint">Điền thông tin bên dưới để tạo danh thiếp và lưu vào tài khoản.</p>
+                    <form id="card-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="card-title">Họ và tên</label>
+                                <input type="text" id="card-title" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="card-role">Công việc</label>
+                                <input type="text" id="card-role" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="card-location">Địa điểm</label>
+                                <input type="text" id="card-location" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="card-summary">Giới thiệu ngắn</label>
+                                <textarea id="card-summary" rows="4" maxlength="600" placeholder="Hãy kể cho mọi người về bạn"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="card-email">Email</label>
+                                <input type="email" id="card-email" placeholder="name@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="card-phone">Số điện thoại</label>
+                                <input type="tel" id="card-phone" placeholder="(+84) 000 000 000">
+                            </div>
+                            <div class="form-group">
+                                <label for="card-website">Website</label>
+                                <input type="url" id="card-website" placeholder="https://">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button class="primary-button" type="submit">Lưu danh thiếp</button>
+                        </div>
+                    </form>
+                    <p class="card-feedback" id="card-feedback" role="status" aria-live="polite"></p>
+                    <div class="card-preview" id="card-preview">
+                        <h3 id="preview-title">Tên của bạn</h3>
+                        <p class="preview-role" id="preview-role">Vị trí công việc • Địa điểm</p>
+                        <p class="preview-summary" id="preview-summary">Giới thiệu về bạn sẽ hiển thị tại đây.</p>
+                        <ul class="preview-links" id="preview-links">
+                            <li id="preview-email" class="hidden"></li>
+                            <li id="preview-phone" class="hidden"></li>
+                            <li id="preview-website" class="hidden"></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="saved-cards hidden" id="saved-cards">
+                    <h2>Danh thiếp đã lưu</h2>
+                    <div class="saved-cards-list" id="saved-cards-list">
+                        <p class="empty-state">Bạn chưa lưu danh thiếp nào.</p>
+                    </div>
+                </div>
+            </section>
         </div>
-        <p class="footer">
-            Contact me: <a href="mailto:imng.uy17@gmail.com">imng.uy17@gmail.com</a><br>
-            &copy; 2023 NguyenUy, All rights reserved.
-        </p>
+    </div>
+    <div id="shared-card-modal" class="modal hidden" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <button class="modal-close" id="close-shared-card" aria-label="Đóng">&times;</button>
+            <h2>Danh thiếp được chia sẻ</h2>
+            <div class="shared-card" id="shared-card-content"></div>
+        </div>
     </div>
 </body>
 </html>

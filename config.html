@@ -18,7 +18,7 @@
         </a>
         <div class="config-card">
             <h1>Chỉnh sửa hồ sơ</h1>
-            <p class="config-subtitle">Tải lên ảnh đại diện, viết lại phần giới thiệu của bạn.</p>
+            <p class="config-subtitle">Tải lên ảnh đại diện, cập nhật bio, địa điểm và công việc của bạn.</p>
             <form class="config-form" id="config-form">
                 <div class="form-group">
                     <label for="avatar-input">Avatar</label>
@@ -33,11 +33,20 @@
                     <textarea id="bio-input" rows="5" maxlength="600" placeholder="Viết một phần giới thiệu ngắn"></textarea>
                     <p class="form-hint">Để trống trường này để sử dụng phần giới thiệu mặc định.</p>
                 </div>
+                <div class="form-group">
+                    <label for="location-input">Location</label>
+                    <input type="text" id="location-input" placeholder="Ví dụ: Thành phố Hồ Chí Minh, Việt Nam">
+                    <p class="form-hint">Thông tin địa điểm sẽ xuất hiện trên hồ sơ chính.</p>
+                </div>
+                <div class="form-group">
+                    <label for="job-input">Job</label>
+                    <input type="text" id="job-input" placeholder="Ví dụ: Frontend Developer">
+                </div>
                 <div class="form-actions">
                     <button type="button" class="secondary-button" id="reset-config">Reset to defaults</button>
                     <button type="submit" class="primary-button" id="save-config">Save changes</button>
                 </div>
-                <p class="config-note">Your preferences are saved locally on this device. Clearing your browser data will reset them.</p>
+                <p class="config-note">Your preferences are saved locally trên thiết bị này. Xóa dữ liệu trình duyệt sẽ đặt lại thông tin.</p>
                 <p class="config-status" id="config-status" role="status" aria-live="polite"></p>
             </form>
         </div>
