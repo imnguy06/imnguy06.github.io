@@ -131,6 +131,33 @@ body.config-page {
     gap: 24px;
 }
 
+.builder-layout {
+    display: grid;
+    grid-template-columns: minmax(320px, 0.9fr) minmax(380px, 1.1fr);
+    gap: 32px;
+    align-items: start;
+}
+
+.preview-column,
+.form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.preview-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.preview-actions .primary-button,
+.preview-actions .secondary-button,
+.preview-actions .ghost-button {
+    width: 100%;
+    justify-content: center;
+}
+
 .box {
     text-align: center;
     animation: slideIn 0.5s ease-in;
@@ -429,6 +456,10 @@ body.config-page {
     min-height: 20px;
 }
 
+.preview-column .card-feedback {
+    text-align: center;
+}
+
 .auth-footer {
     margin-top: 16px;
     color: #5d5a63;
@@ -482,6 +513,27 @@ body.config-page {
 .secondary-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 24px rgba(93, 90, 99, 0.18);
+}
+
+.ghost-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 24px;
+    border-radius: 999px;
+    border: 1px solid rgba(93, 90, 99, 0.3);
+    background: transparent;
+    color: #5d5a63;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ghost-button:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 12px 24px rgba(93, 90, 99, 0.12);
 }
 
 .danger-button {
@@ -600,6 +652,7 @@ body.config-page {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+    justify-content: center;
 }
 
 .preview-socials li {
@@ -624,18 +677,47 @@ body.config-page {
     text-decoration: none;
 }
 
-.card-preview {
-    margin-top: 28px;
-    border-radius: 20px;
-    padding: 24px;
-    background: linear-gradient(135deg, rgba(161, 140, 209, 0.9), rgba(251, 194, 235, 0.9));
+
+.live-preview-card {
+    border-radius: 24px;
+    padding: 32px 28px;
+    background: linear-gradient(135deg, rgba(161, 140, 209, 0.95), rgba(251, 194, 235, 0.92));
     color: #fff;
-    box-shadow: 0 20px 50px rgba(161, 140, 209, 0.35);
+    box-shadow: 0 24px 55px rgba(161, 140, 209, 0.35);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    text-align: center;
 }
 
-.card-preview h3 {
-    margin: 0 0 8px;
-    font-size: 22px;
+.live-preview-card .preview-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    width: 100%;
+}
+
+.live-preview-card h3 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.preview-avatar {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid rgba(255, 255, 255, 0.65);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+}
+
+.preview-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 .preview-role {
@@ -655,6 +737,11 @@ body.config-page {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    align-items: center;
+}
+
+.preview-links li {
+    text-align: center;
 }
 
 .preview-links a {
@@ -669,6 +756,15 @@ body.config-page {
     gap: 20px;
 }
 
+.cards-subtitle {
+    margin: 0 0 20px;
+    color: #5d5a63;
+}
+
+.dark-mode .cards-subtitle {
+    color: #cfc7e2;
+}
+
 .card-item {
     padding: 20px;
     border-radius: 18px;
@@ -677,6 +773,39 @@ body.config-page {
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.card-item.highlight {
+    border: 2px solid rgba(255, 153, 182, 0.65);
+    box-shadow: 0 18px 44px rgba(255, 153, 182, 0.35);
+}
+
+.card-item-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.card-item-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.card-item-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.card-item-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .dark-mode .card-item {
@@ -780,6 +909,29 @@ body.config-page {
     box-shadow: 0 12px 24px rgba(194, 69, 69, 0.28);
 }
 
+.download-button {
+    background: rgba(255, 255, 255, 0.95);
+    color: #2c7a7b;
+    border: 1px solid rgba(44, 122, 123, 0.3);
+    box-shadow: 0 10px 20px rgba(44, 122, 123, 0.18);
+}
+
+.download-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(44, 122, 123, 0.24);
+}
+
+.edit-button {
+    background: linear-gradient(135deg, #7f7fd5, #86a8e7);
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(127, 127, 213, 0.32);
+}
+
+.edit-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px rgba(134, 168, 231, 0.4);
+}
+
 .empty-state {
     margin: 0;
     color: #6b6576;
@@ -825,6 +977,21 @@ body.config-page {
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.shared-card-preview {
+    width: 100%;
+}
+
+.shared-card-hint {
+    font-size: 14px;
+    color: #5d5a63;
+    text-align: center;
+    margin: 8px 0 0;
+}
+
+.dark-mode .shared-card-hint {
+    color: #cfc7e2;
 }
 
 .shared-card .card-item-role {
@@ -939,12 +1106,8 @@ body.config-page {
         padding: 36px 24px;
     }
 
-    .main-grid {
+    .builder-layout {
         grid-template-columns: 1fr;
-    }
-
-    .workspace-column {
-        order: -1;
     }
 }
 
