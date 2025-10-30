@@ -29,6 +29,21 @@ const USERS_KEY = 'businessCard.users';
 const SESSION_KEY = 'businessCard.session';
 const CARDS_KEY_PREFIX = 'businessCard.cards.';
 
+const SOCIAL_OPTIONS = {
+  facebook: { label: 'Facebook', icon: 'fab fa-facebook-f' },
+  instagram: { label: 'Instagram', icon: 'fab fa-instagram' },
+  tiktok: { label: 'TikTok', icon: 'fab fa-tiktok' },
+  youtube: { label: 'YouTube', icon: 'fab fa-youtube' },
+  twitter: { label: 'X (Twitter)', icon: 'fab fa-twitter' },
+  linkedin: { label: 'LinkedIn', icon: 'fab fa-linkedin-in' },
+  github: { label: 'GitHub', icon: 'fab fa-github' },
+  discord: { label: 'Discord', icon: 'fab fa-discord' },
+};
+
+const pageContext = document.body?.dataset?.page || '';
+const LOGIN_PAGE_PATH = 'login.html';
+const CARD_PAGE_PATH = 'index.html#card-builder';
+
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
@@ -230,15 +245,17 @@ function initConfigForm() {
 
 function initAuthPlatform() {
   const authCard = document.getElementById('auth-card');
-  if (!authCard) return;
-
+  const logoutBtn = document.getElementById('logout-button');
+  const sessionInfo = document.getElementById('session-info');
+  const sessionUsername = document.getElementById('session-username');
   const showLoginBtn = document.getElementById('show-login');
   const showRegisterBtn = document.getElementById('show-register');
-  const logoutBtn = document.getElementById('logout-button');
   const loginForm = document.getElementById('login-form');
   const registerForm = document.getElementById('register-form');
   const authStatus = document.getElementById('auth-status');
   const authMessage = document.getElementById('auth-message');
+
+  if (!authCard && !logoutBtn && !sessionInfo) return;
 
   function setAuthMessage(message, tone = 'neutral') {
     if (!authMessage) return;
@@ -246,19 +263,18 @@ function initAuthPlatform() {
     authMessage.dataset.tone = tone;
   }
 
-  function toggleForms(mode) {
+  function toggleForms(mode = 'login') {
     if (!loginForm || !registerForm) return;
-    if (mode === 'login') {
-      loginForm.classList.remove('hidden');
-      registerForm.classList.add('hidden');
-      setAuthMessage('Nhập thông tin để đăng nhập.', 'info');
-    } else if (mode === 'register') {
+    if (mode === 'register') {
       registerForm.classList.remove('hidden');
       loginForm.classList.add('hidden');
       setAuthMessage('Tạo tài khoản mới để bắt đầu tạo danh thiếp.', 'info');
     } else {
-      loginForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
       registerForm.classList.add('hidden');
+      if (authMessage) {
+        setAuthMessage('Nhập thông tin để đăng nhập.', 'info');
+      }
     }
   }
 
@@ -267,8 +283,12 @@ function initAuthPlatform() {
 
   logoutBtn?.addEventListener('click', () => {
     setCurrentUsername(null);
-    setAuthMessage('Bạn đã đăng xuất.', 'info');
-    toggleForms();
+    if (authMessage) {
+      setAuthMessage('Bạn đã đăng xuất.', 'info');
+    }
+    if (pageContext === 'card') {
+      window.location.href = LOGIN_PAGE_PATH;
+    }
   });
 
   loginForm?.addEventListener('submit', (e) => {
@@ -289,7 +309,6 @@ function initAuthPlatform() {
 
     setCurrentUsername(user.username);
     loginForm.reset();
-    toggleForms();
     setAuthMessage(`Chào mừng trở lại, ${user.username}!`, 'success');
   });
 
@@ -320,18 +339,41 @@ function initAuthPlatform() {
     saveUsers(users);
     setCurrentUsername(username);
     registerForm.reset();
-    toggleForms();
-    setAuthMessage('Đăng ký thành công! Bạn đã được đăng nhập.', 'success');
+    setAuthMessage('Đăng ký thành công! Đang chuyển hướng...', 'success');
   });
 
   onSessionChange((username) => {
-    if (!authStatus) return;
-    if (username) {
-      authStatus.textContent = `Đang đăng nhập dưới tên: ${username}`;
-      logoutBtn?.classList.remove('hidden');
-    } else {
-      authStatus.textContent = 'Bạn chưa đăng nhập.';
-      logoutBtn?.classList.add('hidden');
+    if (sessionInfo) {
+      if (username) {
+        sessionInfo.classList.remove('hidden');
+        if (sessionUsername) {
+          sessionUsername.textContent = `Xin chào, ${username}`;
+        }
+      } else {
+        sessionInfo.classList.add('hidden');
+        if (sessionUsername) {
+          sessionUsername.textContent = '';
+        }
+      }
+    }
+
+    if (authStatus) {
+      if (username) {
+        authStatus.textContent = `Đang đăng nhập dưới tên: ${username}`;
+      } else {
+        authStatus.textContent = 'Đăng nhập hoặc đăng ký để tiếp tục.';
+        if (loginForm && registerForm) {
+          toggleForms('login');
+        }
+      }
+    }
+
+    if (authCard && username) {
+      window.location.href = CARD_PAGE_PATH;
+    }
+
+    if (!authCard && pageContext === 'card' && !username) {
+      window.location.href = LOGIN_PAGE_PATH;
     }
   });
 }
@@ -351,6 +393,10 @@ function initCardBuilder() {
   const emailInput = document.getElementById('card-email');
   const phoneInput = document.getElementById('card-phone');
   const websiteInput = document.getElementById('card-website');
+  const socialSelect = document.getElementById('social-select');
+  const socialLinkInput = document.getElementById('social-link');
+  const addSocialBtn = document.getElementById('add-social');
+  const socialList = document.getElementById('social-list');
 
   const previewTitle = document.getElementById('preview-title');
   const previewRole = document.getElementById('preview-role');
@@ -358,6 +404,141 @@ function initCardBuilder() {
   const previewEmail = document.getElementById('preview-email');
   const previewPhone = document.getElementById('preview-phone');
   const previewWebsite = document.getElementById('preview-website');
+  const previewSocials = document.getElementById('preview-socials');
+
+  let socialProfiles = [];
+
+  function renderPreviewSocials() {
+    if (!previewSocials) return;
+    previewSocials.innerHTML = '';
+
+    socialProfiles.forEach((profile) => {
+      const previewItem = document.createElement('li');
+      const icon = document.createElement('i');
+      icon.className = profile.icon;
+      icon.setAttribute('aria-hidden', 'true');
+
+      const link = document.createElement('a');
+      link.href = profile.url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = profile.label;
+
+      previewItem.appendChild(icon);
+      previewItem.appendChild(link);
+      previewSocials.appendChild(previewItem);
+    });
+  }
+
+  function renderSocialList() {
+    if (!socialList) {
+      renderPreviewSocials();
+      return;
+    }
+
+    socialList.innerHTML = '';
+
+    if (!socialProfiles.length) {
+      renderPreviewSocials();
+      return;
+    }
+
+    socialProfiles.forEach((profile) => {
+      const item = document.createElement('li');
+
+      const info = document.createElement('div');
+      info.className = 'social-item-info';
+
+      const icon = document.createElement('i');
+      icon.className = profile.icon;
+      icon.setAttribute('aria-hidden', 'true');
+
+      const link = document.createElement('a');
+      link.href = profile.url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = profile.label;
+
+      info.appendChild(icon);
+      info.appendChild(link);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'social-remove';
+      removeBtn.textContent = 'Xóa';
+      removeBtn.addEventListener('click', () => {
+        socialProfiles = socialProfiles.filter((itemProfile) => itemProfile.platform !== profile.platform);
+        renderSocialList();
+      });
+
+      item.appendChild(info);
+      item.appendChild(removeBtn);
+      socialList.appendChild(item);
+    });
+
+    renderPreviewSocials();
+  }
+
+  addSocialBtn?.addEventListener('click', () => {
+    if (!socialSelect || !socialLinkInput) return;
+
+    const platform = socialSelect.value;
+    const linkValue = socialLinkInput.value.trim();
+
+    if (!platform || !linkValue) {
+      if (feedbackEl) {
+        feedbackEl.textContent = 'Chọn nền tảng và nhập liên kết hợp lệ.';
+        feedbackEl.dataset.tone = 'error';
+      }
+      return;
+    }
+
+    const option = SOCIAL_OPTIONS[platform];
+    if (!option) return;
+
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(linkValue);
+    } catch (error) {
+      if (feedbackEl) {
+        feedbackEl.textContent = 'Liên kết không hợp lệ, vui lòng kiểm tra lại.';
+        feedbackEl.dataset.tone = 'error';
+      }
+      return;
+    }
+
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      if (feedbackEl) {
+        feedbackEl.textContent = 'Liên kết mạng xã hội cần bắt đầu bằng http hoặc https.';
+        feedbackEl.dataset.tone = 'error';
+      }
+      return;
+    }
+
+    const normalizedUrl = parsedUrl.toString();
+    const existingIndex = socialProfiles.findIndex((profile) => profile.platform === platform);
+    const profileData = {
+      platform,
+      label: option.label,
+      icon: option.icon,
+      url: normalizedUrl,
+    };
+
+    if (existingIndex >= 0) {
+      socialProfiles[existingIndex] = profileData;
+    } else {
+      socialProfiles.push(profileData);
+    }
+
+    socialSelect.value = '';
+    socialLinkInput.value = '';
+    renderSocialList();
+
+    if (feedbackEl) {
+      feedbackEl.textContent = 'Đã cập nhật mạng xã hội.';
+      feedbackEl.dataset.tone = 'info';
+    }
+  });
 
   function updatePreview() {
     const title = titleInput.value.trim() || 'Tên của bạn';
@@ -393,10 +574,13 @@ function initCardBuilder() {
       previewWebsite.classList.add('hidden');
       previewWebsite.innerHTML = '';
     }
+
+    renderPreviewSocials();
   }
 
   cardForm.addEventListener('input', updatePreview);
   updatePreview();
+  renderSocialList();
 
   function renderCards(username) {
     savedCardsList.innerHTML = '';
@@ -462,6 +646,29 @@ function initCardBuilder() {
           item.appendChild(linkList);
         }
 
+        const socialItems = Array.isArray(card.socials) ? card.socials : [];
+        if (socialItems.length) {
+          const socialListEl = document.createElement('ul');
+          socialListEl.className = 'card-item-socials';
+          socialItems.forEach((social) => {
+            const socialItem = document.createElement('li');
+            const icon = document.createElement('i');
+            icon.className = social.icon || SOCIAL_OPTIONS[social.platform]?.icon || 'fas fa-link';
+            icon.setAttribute('aria-hidden', 'true');
+
+            const link = document.createElement('a');
+            link.href = social.url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.textContent = social.label || SOCIAL_OPTIONS[social.platform]?.label || 'Liên kết';
+
+            socialItem.appendChild(icon);
+            socialItem.appendChild(link);
+            socialListEl.appendChild(socialItem);
+          });
+          item.appendChild(socialListEl);
+        }
+
         const actions = document.createElement('div');
         actions.className = 'card-actions';
 
@@ -519,6 +726,12 @@ function initCardBuilder() {
       email: emailInput.value.trim(),
       phone: phoneInput.value.trim(),
       website: websiteInput.value.trim(),
+      socials: socialProfiles.map((profile) => ({
+        platform: profile.platform,
+        label: profile.label,
+        icon: profile.icon,
+        url: profile.url,
+      })),
       createdAt: new Date().toISOString(),
     };
 
@@ -529,7 +742,9 @@ function initCardBuilder() {
     feedbackEl.textContent = 'Danh thiếp của bạn đã được lưu! Chia sẻ ngay với bạn bè.';
     feedbackEl.dataset.tone = 'success';
     cardForm.reset();
+    socialProfiles = [];
     updatePreview();
+    renderSocialList();
     renderCards(currentUsername);
   });
 
@@ -542,6 +757,10 @@ function initCardBuilder() {
       cardBuilder.classList.add('hidden');
       savedCardsWrapper.classList.add('hidden');
       feedbackEl.textContent = '';
+      socialProfiles = [];
+      cardForm.reset();
+      renderSocialList();
+      updatePreview();
     }
   });
 }
@@ -619,6 +838,29 @@ function initSharedCardModal() {
         content.appendChild(linkList);
       }
 
+      const socialItems = Array.isArray(sharedCard.socials) ? sharedCard.socials : [];
+      if (socialItems.length) {
+        const socialList = document.createElement('ul');
+        socialList.className = 'card-item-socials';
+        socialItems.forEach((social) => {
+          const socialItem = document.createElement('li');
+          const icon = document.createElement('i');
+          icon.className = social.icon || SOCIAL_OPTIONS[social.platform]?.icon || 'fas fa-link';
+          icon.setAttribute('aria-hidden', 'true');
+
+          const link = document.createElement('a');
+          link.href = social.url;
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.textContent = social.label || SOCIAL_OPTIONS[social.platform]?.label || 'Liên kết';
+
+          socialItem.appendChild(icon);
+          socialItem.appendChild(link);
+          socialList.appendChild(socialItem);
+        });
+        content.appendChild(socialList);
+      }
+
       modal.classList.remove('hidden');
 
       params.delete('card');
@@ -635,10 +877,12 @@ function initLoadingAnimation() {
   window.addEventListener('load', () => {
     const loadingPage = document.querySelector('.loading-page');
     const container = document.querySelector('.container');
-    if (loadingPage && container) {
+    const authWrapper = document.querySelector('.auth-wrapper');
+    const target = container || authWrapper;
+    if (loadingPage && target) {
       setTimeout(() => {
         loadingPage.classList.add('hidden');
-        container.classList.remove('hidden');
+        target.classList.remove('hidden');
       }, 500);
     }
   });

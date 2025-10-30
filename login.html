@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:type" content="website"/>
+    <meta property="og:title" content="imnguy - Đăng nhập"/>
+    <meta property="og:description" content="Đăng nhập để tạo danh thiếp kỹ thuật số"/>
+    <meta property="og:url" content="https://imnguy06.github.io/login.html"/>
+    <title>Đăng nhập danh thiếp</title>
+    <link rel="stylesheet" type="text/css" href="imnguyweb.css">
+    <link rel="icon" type="image/x-icon" href="./icon/thumb-344733.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.bunny.net/css?family=abeezee:400|annie-use-your-telescope:400" rel="stylesheet" />
+    <script src="imnguyweb.js" defer></script>
+</head>
+<body data-page="auth" class="auth-page">
+    <div class="loading-page">
+        <i class="fas fa-spinner fa-spin loading-icon" aria-hidden="true"></i>
+        <span class="visually-hidden">Đang tải nội dung</span>
+    </div>
+    <div class="auth-wrapper hidden">
+        <div class="auth-illustration" aria-hidden="true">
+            <img src="./icon/thumb-344733.png" alt="Biểu tượng danh thiếp">
+        </div>
+        <div class="auth-card" id="auth-card">
+            <h1>Chào mừng trở lại</h1>
+            <p class="auth-status" id="auth-status">Đăng nhập hoặc tạo tài khoản để bắt đầu tạo danh thiếp cá nhân hóa.</p>
+            <div class="auth-buttons">
+                <button class="secondary-button" type="button" id="show-login">Đăng nhập</button>
+                <button class="primary-button" type="button" id="show-register">Đăng ký</button>
+            </div>
+            <form class="auth-form" id="login-form" novalidate>
+                <div class="form-group">
+                    <label for="login-username">Tên đăng nhập</label>
+                    <input type="text" id="login-username" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Mật khẩu</label>
+                    <input type="password" id="login-password" autocomplete="current-password" required>
+                </div>
+                <button class="primary-button" type="submit">Đăng nhập</button>
+            </form>
+            <form class="auth-form hidden" id="register-form" novalidate>
+                <div class="form-group">
+                    <label for="register-username">Tên đăng nhập</label>
+                    <input type="text" id="register-username" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" autocomplete="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Mật khẩu</label>
+                    <input type="password" id="register-password" autocomplete="new-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm-password">Nhập lại mật khẩu</label>
+                    <input type="password" id="register-confirm-password" autocomplete="new-password" required>
+                </div>
+                <button class="primary-button" type="submit">Tạo tài khoản</button>
+            </form>
+            <p class="auth-message" id="auth-message" role="status" aria-live="polite"></p>
+            <p class="auth-footer">Sau khi đăng nhập, bạn sẽ được chuyển đến trang tạo danh thiếp. Nếu đã có tài khoản, hãy đăng nhập để tiếp tục.</p>
+        </div>
+    </div>
+</body>
+</html>
