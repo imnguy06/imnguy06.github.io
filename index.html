@@ -13,19 +13,32 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://fonts.bunny.net/css?family=abeezee:400|annie-use-your-telescope:400" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaE7Ai/3Gzdh0dX8GZFODdgNpTi27C/7fyqCkCmZJLdnOjFkMrDXLI4YAlnXrhIRbkIuWGHGZMRHkRkNvZy4w==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" referrerpolicy="no-referrer" defer></script>
+    <script src="app-config.js" defer></script>
     <script src="imnguyweb.js" defer></script>
 </head>
-<body data-page="card">
+<body data-page="card" data-theme="blossom">
     <div class="loading-page">
         <i class="fas fa-spinner fa-spin loading-icon" aria-hidden="true"></i>
         <span class="visually-hidden">Đang tải nội dung</span>
     </div>
     <div class="container hidden">
         <div class="header-actions">
-            <div class="toggle-container">
-                <button class="toggle-button" id="dark-mode-toggle" aria-label="Toggle dark mode">
-                    <i id="dark-icon" class="fas fa-moon"></i>
-                </button>
+            <div class="header-controls">
+                <div class="toggle-container">
+                    <button class="toggle-button" id="dark-mode-toggle" aria-label="Toggle dark mode">
+                        <i id="dark-icon" class="fas fa-moon"></i>
+                    </button>
+                </div>
+                <div class="theme-selector">
+                    <label class="visually-hidden" for="theme-select">Chọn chủ đề màu sắc</label>
+                    <select id="theme-select" aria-label="Chọn chủ đề màu sắc">
+                        <option value="blossom">Sắc Hồng</option>
+                        <option value="ocean">Biển Xanh</option>
+                        <option value="forest">Xanh Lá</option>
+                        <option value="sunset">Hoàng Hôn</option>
+                    </select>
+                </div>
             </div>
             <div class="header-links">
                 <a class="config-button" id="cards-link" href="cards.html">

@@ -28,6 +28,7 @@ const JOB_KEY = 'profile.job';
 const USERS_KEY = 'businessCard.users';
 const SESSION_KEY = 'businessCard.session';
 const CARDS_KEY_PREFIX = 'businessCard.cards.';
+const SHARED_CARDS_KEY = 'businessCard.sharedCards';
 
 const SOCIAL_OPTIONS = {
   facebook: { label: 'Facebook', icon: 'fab fa-facebook-f' },
@@ -44,7 +45,15 @@ const pageContext = document.body?.dataset?.page || '';
 const LOGIN_PAGE_PATH = 'login.html';
 const CARD_PAGE_PATH = 'index.html';
 const CARDS_PAGE_PATH = 'cards.html';
+const SHARE_PAGE_PATH = 'share.html';
 const DEFAULT_CARD_AVATAR = './icon/thumb-344733.png';
+const THEME_STORAGE_KEY = 'businessCard.theme';
+const DEFAULT_THEME = 'blossom';
+
+const preloadedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+if (preloadedTheme) {
+  document.body.dataset.theme = preloadedTheme;
+}
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -381,6 +390,7 @@ const STORAGE_LEGACY_PREFIX = 'b1:';
 
 let currentUsername = localStorage.getItem(SESSION_KEY) || null;
 const sessionListeners = [];
+let shareModalController = null;
 
 function onSessionChange(listener) {
   sessionListeners.push(listener);
@@ -397,7 +407,7 @@ function setCurrentUsername(username) {
   sessionListeners.forEach((fn) => fn(currentUsername));
 }
 
-function getUsers() {
+function getLocalUsers() {
   try {
     const raw = localStorage.getItem(USERS_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -407,13 +417,13 @@ function getUsers() {
   }
 }
 
-function saveUsers(users) {
+function saveLocalUsers(users) {
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
-function findUser(username) {
+function findLocalUser(username) {
   const normalized = username.trim().toLowerCase();
-  return getUsers().find((user) => user.username.toLowerCase() === normalized) || null;
+  return getLocalUsers().find((user) => user.username.toLowerCase() === normalized) || null;
 }
 
 function parseStoredCards(raw) {
@@ -463,7 +473,7 @@ function serializeCards(cards) {
   return `${STORAGE_JSON_PREFIX}${json}`;
 }
 
-function loadCards(username) {
+function loadLocalCards(username) {
   try {
     const raw = localStorage.getItem(`${CARDS_KEY_PREFIX}${username}`);
     return parseStoredCards(raw);
@@ -473,7 +483,7 @@ function loadCards(username) {
   }
 }
 
-function saveCards(username, cards) {
+function saveLocalCards(username, cards) {
   const storageKey = `${CARDS_KEY_PREFIX}${username}`;
   const payload = serializeCards(cards);
   try {
@@ -487,6 +497,334 @@ function saveCards(username, cards) {
     throw error;
   }
 }
+
+function getLocalSharedCards() {
+  try {
+    const raw = localStorage.getItem(SHARED_CARDS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      return parsed;
+    }
+  } catch (error) {
+    console.error('Không thể đọc bộ nhớ cache chia sẻ', error);
+  }
+  return {};
+}
+
+function saveLocalSharedCards(cache) {
+  try {
+    localStorage.setItem(SHARED_CARDS_KEY, JSON.stringify(cache));
+  } catch (error) {
+    console.error('Không thể lưu bộ nhớ cache chia sẻ', error);
+  }
+}
+
+function rememberSharedCard(id, payload) {
+  const cache = getLocalSharedCards();
+  cache[id] = {
+    ...payload,
+    createdAt: payload.createdAt || new Date().toISOString(),
+  };
+  const entries = Object.entries(cache)
+    .sort(([, a], [, b]) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  if (entries.length > 20) {
+    entries.slice(20).forEach(([key]) => {
+      delete cache[key];
+    });
+  }
+  saveLocalSharedCards(cache);
+  return cache[id];
+}
+
+function getLocalSharedCard(id) {
+  const cache = getLocalSharedCards();
+  return cache[id] || null;
+}
+
+function generateId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `id-${Date.now().toString(36)}-${Math.random().toString(16).slice(2)}`;
+}
+
+function createRemoteStore() {
+  const config = window.IMNGUY_APP_CONFIG || {};
+  const supabaseUrl = (config.supabaseUrl || '').trim();
+  const supabaseAnonKey = (config.supabaseAnonKey || '').trim();
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { enabled: false };
+  }
+
+  const baseUrl = supabaseUrl.replace(/\/$/, '');
+  const tables = {
+    users: 'card_users',
+    cards: 'cards',
+    shared: 'shared_cards',
+    ...(config.tables || {}),
+  };
+  const shareOptions = config.share || {};
+  const shareExpiryHours = Number.isFinite(Number.parseInt(shareOptions.expirationHours, 10))
+    ? Number.parseInt(shareOptions.expirationHours, 10)
+    : null;
+
+  const defaultHeaders = {
+    apikey: supabaseAnonKey,
+    Authorization: `Bearer ${supabaseAnonKey}`,
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+
+  const buildUrl = (path) => new URL(`${baseUrl}/rest/v1/${path}`);
+
+  const request = async (input, { method = 'GET', headers = {}, body } = {}) => {
+    const url = input instanceof URL ? input : buildUrl(input);
+    const response = await fetch(url.toString(), {
+      method,
+      headers: { ...defaultHeaders, ...headers },
+      body,
+    });
+    if (!response.ok) {
+      const errorPayload = await response.text().catch(() => '');
+      const error = new Error(`REMOTE_REQUEST_FAILED: ${response.status}`);
+      error.cause = errorPayload;
+      throw error;
+    }
+    return response;
+  };
+
+  const parseJson = async (response) => {
+    try {
+      return await response.json();
+    } catch (error) {
+      return null;
+    }
+  };
+
+  return {
+    enabled: true,
+    shareExpiryHours,
+    async fetchUser(username) {
+      const url = buildUrl(tables.users);
+      url.searchParams.set('username', `eq.${username}`);
+      url.searchParams.set('select', '*');
+      const response = await request(url);
+      const data = await parseJson(response);
+      return Array.isArray(data) ? data[0] || null : null;
+    },
+    async upsertUser(user) {
+      const response = await request(tables.users, {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify(user),
+      });
+      const data = await parseJson(response);
+      return Array.isArray(data) ? data[0] || user : data || user;
+    },
+    async fetchCards(username) {
+      const url = buildUrl(tables.cards);
+      url.searchParams.set('username', `eq.${username}`);
+      url.searchParams.set('select', '*');
+      const response = await request(url);
+      const data = await parseJson(response);
+      if (!Array.isArray(data)) return [];
+      return data.map((row) => {
+        if (row.data && typeof row.data === 'object') {
+          return { ...row.data, id: row.data.id ?? row.id };
+        }
+        const { id, username: owner, updated_at: updatedAt, ...rest } = row;
+        return { id, username: owner, updatedAt, ...rest };
+      });
+    },
+    async replaceCards(username, cards) {
+      const deleteUrl = buildUrl(tables.cards);
+      deleteUrl.searchParams.set('username', `eq.${username}`);
+      await request(deleteUrl, {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+      if (!cards.length) return;
+      const payload = cards.map((card) => ({
+        id: card.id,
+        username,
+        data: card,
+        updated_at: new Date().toISOString(),
+      }));
+      await request(tables.cards, {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify(payload),
+      });
+    },
+    async saveSharedCard(record) {
+      await request(tables.shared, {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(record),
+      });
+      return record;
+    },
+    async getSharedCard(id) {
+      const url = buildUrl(tables.shared);
+      url.searchParams.set('id', `eq.${id}`);
+      url.searchParams.set('select', '*');
+      const response = await request(url);
+      const data = await parseJson(response);
+      return Array.isArray(data) ? data[0] || null : null;
+    },
+  };
+}
+
+const remoteStore = createRemoteStore();
+
+function createDataStore(remote) {
+  return {
+    remoteEnabled: remote.enabled,
+    async findUser(username) {
+      const normalized = username.trim().toLowerCase();
+      if (remote.enabled) {
+        try {
+          const remoteUser = await remote.fetchUser(normalized);
+          if (remoteUser) {
+            const users = getLocalUsers().filter(
+              (item) => item.username.trim().toLowerCase() !== normalized,
+            );
+            users.push({
+              username: remoteUser.username,
+              email: remoteUser.email,
+              password: remoteUser.password,
+              createdAt: remoteUser.created_at || remoteUser.createdAt || new Date().toISOString(),
+            });
+            saveLocalUsers(users);
+            return users.find((item) => item.username.trim().toLowerCase() === normalized) || null;
+          }
+        } catch (error) {
+          console.error('Không thể tải người dùng từ máy chủ', error);
+        }
+      }
+      return findLocalUser(username);
+    },
+    async createUser(user) {
+      const normalized = {
+        username: user.username.trim(),
+        email: user.email.trim(),
+        password: user.password,
+        createdAt: user.createdAt || new Date().toISOString(),
+      };
+      if (remote.enabled) {
+        await remote.upsertUser({
+          username: normalized.username,
+          email: normalized.email,
+          password: normalized.password,
+          created_at: normalized.createdAt,
+        });
+      }
+      const users = getLocalUsers().filter(
+        (item) => item.username.trim().toLowerCase() !== normalized.username.toLowerCase(),
+      );
+      users.push(normalized);
+      saveLocalUsers(users);
+      return normalized;
+    },
+    async loadCards(username) {
+      if (!username) return [];
+      if (remote.enabled) {
+        try {
+          const cards = await remote.fetchCards(username);
+          saveLocalCards(username, cards);
+          return cards;
+        } catch (error) {
+          console.error('Không thể tải danh thiếp từ máy chủ', error);
+        }
+      }
+      return loadLocalCards(username);
+    },
+    async saveCards(username, cards) {
+      let remoteError = null;
+      if (remote.enabled) {
+        try {
+          await remote.replaceCards(username, cards);
+        } catch (error) {
+          remoteError = error;
+          console.error('Không thể đồng bộ danh thiếp với máy chủ', error);
+        }
+      }
+      saveLocalCards(username, cards);
+      if (remoteError) throw remoteError;
+    },
+    async saveSharedCard(card, context = {}) {
+      const shareId = generateId();
+      const createdAt = new Date().toISOString();
+      if (remote.enabled) {
+        try {
+          const record = {
+            id: shareId,
+            username: context.username || null,
+            card_id: context.cardId || card.id || null,
+            data: card,
+            created_at: createdAt,
+          };
+          let expiresAt = null;
+          if (remote.shareExpiryHours) {
+            const expires = new Date(Date.now() + remote.shareExpiryHours * 60 * 60 * 1000);
+            expiresAt = expires.toISOString();
+            record.expires_at = expiresAt;
+          }
+          await remote.saveSharedCard(record);
+          rememberSharedCard(shareId, {
+            card,
+            username: record.username,
+            cardId: record.card_id,
+            createdAt: record.created_at,
+            expiresAt,
+          });
+          return { id: shareId, scope: 'remote', expiresAt };
+        } catch (error) {
+          console.error('Không thể lưu chia sẻ lên máy chủ', error);
+        }
+      }
+      rememberSharedCard(shareId, { card, username: context.username || null, createdAt });
+      return { id: shareId, scope: 'local' };
+    },
+    async getSharedCardById(id) {
+      if (!id) return null;
+      if (remote.enabled) {
+        try {
+          const record = await remote.getSharedCard(id);
+          if (record && record.data) {
+            rememberSharedCard(id, {
+              card: record.data,
+              username: record.username || null,
+              createdAt: record.created_at,
+              expiresAt: record.expires_at,
+            });
+            return {
+              card: record.data,
+              owner: record.username || null,
+              expiresAt: record.expires_at || null,
+              source: 'remote',
+            };
+          }
+        } catch (error) {
+          console.error('Không thể tải danh thiếp chia sẻ từ máy chủ', error);
+        }
+      }
+      const local = getLocalSharedCard(id);
+      if (local) {
+        return {
+          card: local.card,
+          owner: local.username || null,
+          expiresAt: local.expiresAt || null,
+          source: 'local',
+        };
+      }
+      return null;
+    },
+  };
+}
+
+const dataStore = createDataStore(remoteStore);
 
 function encodeCardData(card) {
   const json = JSON.stringify(card);
@@ -561,11 +899,50 @@ function decodeCardData(encoded) {
   }
 }
 
-function createShareUrl(card) {
-  const encoded = encodeCardData(card);
-  const baseUrl = new URL('index.html', window.location.href);
-  baseUrl.searchParams.set('card', encoded);
-  return baseUrl.toString();
+async function createShareLink(card, context = {}) {
+  const shareInfo = await dataStore.saveSharedCard(card, context);
+  const baseUrl = new URL(SHARE_PAGE_PATH, window.location.href);
+  if (shareInfo.scope === 'remote') {
+    baseUrl.searchParams.set('id', shareInfo.id);
+  } else {
+    const encoded = encodeCardData(card);
+    baseUrl.searchParams.set('card', encoded);
+  }
+  return {
+    ...shareInfo,
+    url: baseUrl.toString(),
+  };
+}
+
+async function handleShareWorkflow(card, shareInfo, feedbackEl) {
+  if (!shareInfo || !shareInfo.url) {
+    throw new Error('Thiếu thông tin chia sẻ.');
+  }
+
+  if (shareModalController?.showShareSheet) {
+    shareModalController.showShareSheet(card, shareInfo);
+  }
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: card.title || 'Danh thiếp',
+        text: 'Xem danh thiếp của tôi nhé!',
+        url: shareInfo.url,
+      });
+      setFeedback(feedbackEl, 'Đã chia sẻ danh thiếp của bạn.', 'success');
+      return;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        setFeedback(feedbackEl, 'Đã hủy chia sẻ.', 'info');
+        return;
+      }
+      console.warn('Chia sẻ thông qua API trình duyệt thất bại', error);
+    }
+  }
+
+  await copyToClipboard(shareInfo.url);
+  setFeedback(feedbackEl, 'Đã sao chép liên kết chia sẻ vào clipboard!', 'success');
 }
 
 function copyToClipboard(text) {
@@ -591,6 +968,46 @@ function copyToClipboard(text) {
     } catch (error) {
       reject(error);
     }
+  });
+}
+
+function applyTheme(themeName) {
+  const theme = themeName || DEFAULT_THEME;
+  document.body.dataset.theme = theme;
+  const selectors = document.querySelectorAll('#theme-select');
+  selectors.forEach((select) => {
+    if (select.value !== theme) {
+      select.value = theme;
+    }
+  });
+}
+
+function initThemeManager() {
+  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME;
+  applyTheme(savedTheme);
+
+  document.querySelectorAll('#theme-select').forEach((select) => {
+    select.value = savedTheme;
+    select.addEventListener('change', (event) => {
+      const selectedTheme = event.target.value || DEFAULT_THEME;
+      applyTheme(selectedTheme);
+      localStorage.setItem(THEME_STORAGE_KEY, selectedTheme);
+    });
+  });
+}
+
+function formatExpiryTimestamp(value) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date.toLocaleString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   });
 }
 
@@ -752,6 +1169,27 @@ function createPreviewElement(card, { append = true } = {}) {
   return preview;
 }
 
+async function ensureElementAssetsLoaded(root) {
+  const images = Array.from(root.querySelectorAll('img'));
+  const waiters = images.map((img) => {
+    if (img.complete && img.naturalWidth !== 0) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      const cleanup = () => {
+        img.removeEventListener('load', onLoad);
+        img.removeEventListener('error', onError);
+        resolve();
+      };
+      const onLoad = () => cleanup();
+      const onError = () => cleanup();
+      img.addEventListener('load', onLoad, { once: true });
+      img.addEventListener('error', onError, { once: true });
+    });
+  });
+  await Promise.all(waiters);
+}
+
 async function downloadCardAsImage(card, sourceElement) {
   if (typeof window.html2canvas !== 'function') {
     throw new Error('html2canvas chưa sẵn sàng');
@@ -766,6 +1204,7 @@ async function downloadCardAsImage(card, sourceElement) {
   }
 
   try {
+    await ensureElementAssetsLoaded(element);
     const canvas = await window.html2canvas(element, {
       backgroundColor: null,
       scale: window.devicePixelRatio > 1 ? 2 : 1.5,
@@ -930,7 +1369,7 @@ function initAuthPlatform() {
     }
   });
 
-  loginForm?.addEventListener('submit', (e) => {
+  loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
@@ -940,18 +1379,23 @@ function initAuthPlatform() {
       return;
     }
 
-    const user = findUser(username);
-    if (!user || user.password !== password) {
-      setAuthMessage('Tên đăng nhập hoặc mật khẩu không chính xác.', 'error');
-      return;
-    }
+    try {
+      const user = await dataStore.findUser(username);
+      if (!user || user.password !== password) {
+        setAuthMessage('Tên đăng nhập hoặc mật khẩu không chính xác.', 'error');
+        return;
+      }
 
-    setCurrentUsername(user.username);
-    loginForm.reset();
-    setAuthMessage(`Chào mừng trở lại, ${user.username}!`, 'success');
+      setCurrentUsername(user.username);
+      loginForm.reset();
+      setAuthMessage(`Chào mừng trở lại, ${user.username}!`, 'success');
+    } catch (error) {
+      console.error('Đăng nhập thất bại', error);
+      setAuthMessage('Không thể đăng nhập lúc này. Vui lòng thử lại sau.', 'error');
+    }
   });
 
-  registerForm?.addEventListener('submit', (e) => {
+  registerForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('register-username').value.trim();
     const email = document.getElementById('register-email').value.trim();
@@ -968,17 +1412,21 @@ function initAuthPlatform() {
       return;
     }
 
-    if (findUser(username)) {
-      setAuthMessage('Tên đăng nhập đã tồn tại, vui lòng chọn tên khác.', 'error');
-      return;
-    }
+    try {
+      const existingUser = await dataStore.findUser(username);
+      if (existingUser) {
+        setAuthMessage('Tên đăng nhập đã tồn tại, vui lòng chọn tên khác.', 'error');
+        return;
+      }
 
-    const users = getUsers();
-    users.push({ username, email, password, createdAt: new Date().toISOString() });
-    saveUsers(users);
-    setCurrentUsername(username);
-    registerForm.reset();
-    setAuthMessage('Đăng ký thành công! Đang chuyển hướng...', 'success');
+      await dataStore.createUser({ username, email, password });
+      setCurrentUsername(username);
+      registerForm.reset();
+      setAuthMessage('Đăng ký thành công! Đang chuyển hướng...', 'success');
+    } catch (error) {
+      console.error('Đăng ký thất bại', error);
+      setAuthMessage('Không thể tạo tài khoản lúc này. Vui lòng thử lại sau.', 'error');
+    }
   });
 
   onSessionChange((username) => {
@@ -1138,8 +1586,8 @@ function initCardBuilder() {
     clearEditParam();
   }
 
-  function loadCardForEditing(username, cardId) {
-    const cards = loadCards(username);
+  async function loadCardForEditing(username, cardId) {
+    const cards = await dataStore.loadCards(username);
     const card = cards.find((item) => item.id === cardId);
     if (!card) {
       setFeedback(feedbackEl, 'Không tìm thấy danh thiếp cần chỉnh sửa.', 'error');
@@ -1267,26 +1715,11 @@ function initCardBuilder() {
     sharePreviewBtn.addEventListener('click', async () => {
       const cardData = getCurrentCardData();
       try {
-        const shareUrl = createShareUrl(cardData);
-        if (navigator.share) {
-          try {
-            await navigator.share({
-              title: cardData.title || 'Danh thiếp',
-              text: 'Xem danh thiếp của tôi nhé!',
-              url: shareUrl,
-            });
-            setFeedback(previewFeedbackEl, 'Đã chia sẻ danh thiếp của bạn.', 'success');
-            return;
-          } catch (error) {
-            if (error.name === 'AbortError') {
-              setFeedback(previewFeedbackEl, 'Đã hủy chia sẻ.', 'info');
-              return;
-            }
-          }
-        }
-
-        await copyToClipboard(shareUrl);
-        setFeedback(previewFeedbackEl, 'Đã sao chép liên kết chia sẻ vào clipboard!', 'success');
+        const shareResult = await createShareLink(cardData, {
+          username: currentUsername,
+          cardId: editingCardId || null,
+        });
+        await handleShareWorkflow(cardData, shareResult, previewFeedbackEl);
       } catch (error) {
         console.error(error);
         setFeedback(previewFeedbackEl, 'Không thể chia sẻ danh thiếp, vui lòng thử lại.', 'error');
@@ -1306,7 +1739,7 @@ function initCardBuilder() {
     });
   }
 
-  cardForm.addEventListener('submit', (event) => {
+  cardForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!currentUsername) {
       setFeedback(feedbackEl, 'Bạn cần đăng nhập để lưu danh thiếp.', 'error');
@@ -1315,7 +1748,14 @@ function initCardBuilder() {
 
     const now = new Date().toISOString();
     const baseCard = getCurrentCardData();
-    const cards = loadCards(currentUsername);
+    let cards;
+    try {
+      cards = await dataStore.loadCards(currentUsername);
+    } catch (error) {
+      console.error('Không thể tải danh thiếp đã lưu', error);
+      setFeedback(feedbackEl, 'Không thể tải danh thiếp đã lưu. Vui lòng thử lại.', 'error');
+      return;
+    }
 
     if (editingCardId) {
       const index = cards.findIndex((item) => item.id === editingCardId);
@@ -1332,12 +1772,12 @@ function initCardBuilder() {
         updatedAt: now,
       };
       try {
-        saveCards(currentUsername, cards);
+        await dataStore.saveCards(currentUsername, cards);
       } catch (error) {
         if (error?.message === 'STORAGE_QUOTA_EXCEEDED') {
           setFeedback(feedbackEl, 'Bộ nhớ trình duyệt đã đầy, không thể lưu danh thiếp. Hãy xóa bớt hoặc giảm kích thước ảnh.', 'error');
         } else {
-          setFeedback(feedbackEl, 'Không thể lưu danh thiếp, vui lòng thử lại.', 'error');
+          setFeedback(feedbackEl, 'Không thể đồng bộ danh thiếp, vui lòng thử lại.', 'error');
         }
         console.error('Không thể cập nhật danh thiếp', error);
         return;
@@ -1354,12 +1794,12 @@ function initCardBuilder() {
     };
     cards.push(newCard);
     try {
-      saveCards(currentUsername, cards);
+      await dataStore.saveCards(currentUsername, cards);
     } catch (error) {
       if (error?.message === 'STORAGE_QUOTA_EXCEEDED') {
         setFeedback(feedbackEl, 'Bộ nhớ trình duyệt đã đầy, không thể lưu danh thiếp mới. Hãy xóa bớt hoặc giảm kích thước ảnh.', 'error');
       } else {
-        setFeedback(feedbackEl, 'Không thể lưu danh thiếp, vui lòng thử lại.', 'error');
+        setFeedback(feedbackEl, 'Không thể đồng bộ danh thiếp, vui lòng thử lại.', 'error');
       }
       console.error('Không thể lưu danh thiếp mới', error);
       return;
@@ -1372,7 +1812,9 @@ function initCardBuilder() {
     if (username) {
       cardBuilder.classList.remove('hidden');
       if (pendingEditId) {
-        loadCardForEditing(username, pendingEditId);
+        loadCardForEditing(username, pendingEditId).catch((error) => {
+          console.error('Không thể tải danh thiếp để chỉnh sửa', error);
+        });
       } else if (!editingCardId) {
         applyCurrentPreview();
       }
@@ -1415,7 +1857,7 @@ function initCardsLibrary() {
     cardsList.appendChild(empty);
   }
 
-  function createCardActions(card, username) {
+  function createCardActions(card, username, refreshCards) {
     const actions = document.createElement('div');
     actions.className = 'card-actions';
 
@@ -1425,26 +1867,8 @@ function initCardsLibrary() {
     shareBtn.textContent = 'Chia sẻ';
     shareBtn.addEventListener('click', async () => {
       try {
-        const shareUrl = createShareUrl(card);
-        if (navigator.share) {
-          try {
-            await navigator.share({
-              title: card.title || 'Danh thiếp',
-              text: 'Xem danh thiếp của tôi nhé!',
-              url: shareUrl,
-            });
-            setFeedback(feedbackEl, 'Đã chia sẻ danh thiếp của bạn.', 'success');
-            return;
-          } catch (error) {
-            if (error.name === 'AbortError') {
-              setFeedback(feedbackEl, 'Đã hủy chia sẻ.', 'info');
-              return;
-            }
-          }
-        }
-
-        await copyToClipboard(shareUrl);
-        setFeedback(feedbackEl, 'Đã sao chép liên kết chia sẻ vào clipboard!', 'success');
+        const shareResult = await createShareLink(card, { username });
+        await handleShareWorkflow(card, shareResult, feedbackEl);
       } catch (error) {
         console.error(error);
         setFeedback(feedbackEl, 'Không thể chia sẻ danh thiếp, vui lòng thử lại.', 'error');
@@ -1477,19 +1901,27 @@ function initCardsLibrary() {
     deleteBtn.type = 'button';
     deleteBtn.className = 'action-button delete-button';
     deleteBtn.textContent = 'Xóa';
-    deleteBtn.addEventListener('click', () => {
+    deleteBtn.addEventListener('click', async () => {
       const confirmed = window.confirm('Bạn có chắc chắn muốn xóa danh thiếp này?');
       if (!confirmed) return;
-      const updatedCards = loadCards(username).filter((itemCard) => itemCard.id !== card.id);
+      let updatedCards = [];
       try {
-        saveCards(username, updatedCards);
+        const existing = await dataStore.loadCards(username);
+        updatedCards = existing.filter((itemCard) => itemCard.id !== card.id);
+      } catch (error) {
+        console.error('Không thể tải danh thiếp trước khi xóa', error);
+        setFeedback(feedbackEl, 'Không thể tải danh thiếp, vui lòng thử lại.', 'error');
+        return;
+      }
+      try {
+        await dataStore.saveCards(username, updatedCards);
       } catch (error) {
         console.error('Không thể xóa danh thiếp', error);
         setFeedback(feedbackEl, 'Không thể xóa danh thiếp, vui lòng thử lại.', 'error');
         return;
       }
       setFeedback(feedbackEl, 'Đã xóa danh thiếp.', 'info');
-      renderCards(username);
+      refreshCards();
     });
 
     actions.appendChild(shareBtn);
@@ -1499,8 +1931,16 @@ function initCardsLibrary() {
     return actions;
   }
 
-  function renderCards(username) {
-    const cards = loadCards(username);
+  async function renderCards(username) {
+    let cards = [];
+    try {
+      cards = await dataStore.loadCards(username);
+    } catch (error) {
+      console.error('Không thể tải danh thiếp đã lưu', error);
+      renderEmptyState('Không thể tải danh thiếp. Vui lòng kiểm tra kết nối và thử lại.');
+      setFeedback(feedbackEl, 'Không thể tải danh thiếp từ máy chủ.', 'error');
+      return;
+    }
     if (!cards.length) {
       renderEmptyState('Bạn chưa lưu danh thiếp nào. Hãy tạo danh thiếp đầu tiên của bạn!');
       setFeedback(feedbackEl, '');
@@ -1602,7 +2042,9 @@ function initCardsLibrary() {
         item.appendChild(socialListEl);
       }
 
-      item.appendChild(createCardActions(card, username));
+      item.appendChild(createCardActions(card, username, () => {
+        renderCards(username);
+      }));
       cardsList.appendChild(item);
     });
 
@@ -1622,7 +2064,9 @@ function initCardsLibrary() {
 
   onSessionChange((username) => {
     if (username) {
-      renderCards(username);
+      renderCards(username).catch((error) => {
+        console.error('Không thể hiển thị danh thiếp đã lưu', error);
+      });
     } else {
       renderEmptyState('Đăng nhập để xem và quản lý danh thiếp của bạn.');
       setFeedback(feedbackEl, '');
@@ -1635,7 +2079,7 @@ function initSharedCardModal() {
   const modal = document.getElementById('shared-card-modal');
   const closeBtn = document.getElementById('close-shared-card');
   const content = document.getElementById('shared-card-content');
-  if (!modal || !closeBtn || !content) return;
+  if (!modal || !closeBtn || !content) return null;
 
   function hideModal() {
     modal.classList.add('hidden');
@@ -1653,30 +2097,247 @@ function initSharedCardModal() {
     }
   });
 
+  function buildShareSheet(card, shareInfo) {
+    content.innerHTML = '';
+    const layout = document.createElement('div');
+    layout.className = 'share-modal-layout';
+
+    const previewWrapper = document.createElement('div');
+    previewWrapper.className = 'share-modal-preview';
+    const preview = buildPreviewStructure();
+    preview.classList.add('shared-card-preview');
+    updatePreviewContent(preview, card);
+    previewWrapper.appendChild(preview);
+    layout.appendChild(previewWrapper);
+
+    const panel = document.createElement('div');
+    panel.className = 'share-modal-panel';
+
+    const description = document.createElement('p');
+    description.textContent =
+      shareInfo.scope === 'remote'
+        ? 'Liên kết danh thiếp của bạn đã được lưu trên đám mây. Bạn có thể chia sẻ bằng mã QR hoặc sao chép liên kết bên dưới.'
+        : 'Liên kết được tạo tạm thời trên thiết bị này. Hãy sao chép hoặc quét mã QR để gửi cho người khác.';
+    panel.appendChild(description);
+
+    if (shareInfo.expiresAt) {
+      const expiryNote = document.createElement('p');
+      expiryNote.className = 'share-expiry-note';
+      const formattedExpiry = formatExpiryTimestamp(shareInfo.expiresAt);
+      expiryNote.textContent = formattedExpiry
+        ? `Liên kết sẽ hết hạn vào ${formattedExpiry}.`
+        : 'Liên kết sẽ hết hạn sau thời gian đã cấu hình.';
+      panel.appendChild(expiryNote);
+    }
+
+    const linkRow = document.createElement('div');
+    linkRow.className = 'share-link-row';
+    const linkInput = document.createElement('input');
+    linkInput.type = 'text';
+    linkInput.value = shareInfo.url;
+    linkInput.readOnly = true;
+    linkInput.addEventListener('focus', () => linkInput.select());
+    linkRow.appendChild(linkInput);
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'secondary-button';
+    copyBtn.textContent = 'Sao chép';
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await copyToClipboard(shareInfo.url);
+        copyBtn.textContent = 'Đã sao chép!';
+        setTimeout(() => {
+          copyBtn.textContent = 'Sao chép';
+        }, 2000);
+      } catch (error) {
+        console.error('Không thể sao chép liên kết', error);
+      }
+    });
+    linkRow.appendChild(copyBtn);
+    panel.appendChild(linkRow);
+
+    const qrWrapper = document.createElement('div');
+    qrWrapper.className = 'share-modal-qr';
+    const qrCanvas = document.createElement('canvas');
+    qrWrapper.appendChild(qrCanvas);
+    if (window.QRious) {
+      // eslint-disable-next-line no-new
+      new window.QRious({
+        element: qrCanvas,
+        value: shareInfo.url,
+        size: 140,
+        level: 'H',
+      });
+    } else {
+      const fallback = document.createElement('p');
+      fallback.textContent = 'Không thể tạo mã QR (thiếu thư viện QRious).';
+      qrWrapper.appendChild(fallback);
+    }
+    panel.appendChild(qrWrapper);
+
+    const actions = document.createElement('div');
+    actions.className = 'share-modal-actions';
+    const openBtn = document.createElement('button');
+    openBtn.type = 'button';
+    openBtn.className = 'ghost-button';
+    openBtn.textContent = 'Mở trang chia sẻ';
+    openBtn.addEventListener('click', () => {
+      window.open(shareInfo.url, '_blank', 'noopener');
+    });
+    actions.appendChild(openBtn);
+    panel.appendChild(actions);
+
+    layout.appendChild(panel);
+    content.appendChild(layout);
+    modal.classList.remove('hidden');
+  }
+
+  function showSharedCard(card) {
+    content.innerHTML = '';
+    const preview = buildPreviewStructure();
+    preview.classList.add('shared-card-preview');
+    updatePreviewContent(preview, card);
+    content.appendChild(preview);
+
+    const hint = document.createElement('p');
+    hint.className = 'shared-card-hint';
+    hint.textContent = 'Đăng nhập để lưu danh thiếp này vào tài khoản của bạn.';
+    content.appendChild(hint);
+
+    modal.classList.remove('hidden');
+  }
+
   const params = new URLSearchParams(window.location.search);
   const cardParam = params.get('card');
   if (cardParam) {
     try {
       const sharedCard = decodeCardData(cardParam);
-
-      const preview = buildPreviewStructure();
-      preview.classList.add('shared-card-preview');
-      updatePreviewContent(preview, sharedCard);
-      content.appendChild(preview);
-
-      const hint = document.createElement('p');
-      hint.className = 'shared-card-hint';
-      hint.textContent = 'Đăng nhập để lưu danh thiếp này vào tài khoản của bạn.';
-      content.appendChild(hint);
-
-      modal.classList.remove('hidden');
-
+      showSharedCard(sharedCard);
       params.delete('card');
       const newQuery = params.toString();
       const newUrl = `${window.location.pathname}${newQuery ? `?${newQuery}` : ''}${window.location.hash}`;
       window.history.replaceState({}, document.title, newUrl);
     } catch (error) {
       console.error('Không thể đọc danh thiếp được chia sẻ', error);
+    }
+  }
+
+  return {
+    hide: hideModal,
+    showShareSheet: buildShareSheet,
+    showSharedCard,
+  };
+}
+
+async function initSharePage() {
+  if (document.body.dataset.page !== 'share') return;
+
+  const cardSlot = document.getElementById('share-card-slot');
+  const feedbackEl = document.getElementById('share-feedback');
+  const expiryNoteEl = document.getElementById('share-expiry-note');
+  const urlInput = document.getElementById('share-page-url');
+  const copyBtn = document.getElementById('share-page-copy');
+  const downloadBtn = document.getElementById('share-page-download');
+  const qrCanvas = document.getElementById('share-page-qr');
+  if (!cardSlot || !urlInput || !copyBtn || !downloadBtn || !qrCanvas) return;
+
+  if (expiryNoteEl) {
+    expiryNoteEl.textContent = '';
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const shareId = params.get('id');
+  const cardParam = params.get('card');
+
+  let cardData = null;
+  let owner = null;
+  let expiresAt = null;
+
+  if (shareId) {
+    try {
+      const remoteCard = await dataStore.getSharedCardById(shareId);
+      if (remoteCard?.card) {
+        cardData = remoteCard.card;
+        owner = remoteCard.owner || null;
+        expiresAt = remoteCard.expiresAt || null;
+      }
+    } catch (error) {
+      console.error('Không thể tải danh thiếp từ máy chủ', error);
+      setFeedback(feedbackEl, 'Không thể tải danh thiếp từ máy chủ. Vui lòng thử lại sau.', 'error');
+      return;
+    }
+  } else if (cardParam) {
+    try {
+      cardData = decodeCardData(cardParam);
+    } catch (error) {
+      console.error('Không thể giải mã danh thiếp từ liên kết chia sẻ', error);
+      setFeedback(feedbackEl, 'Liên kết chia sẻ không hợp lệ hoặc đã hết hạn.', 'error');
+      return;
+    }
+  }
+
+  if (!cardData) {
+    setFeedback(feedbackEl, 'Không tìm thấy danh thiếp được chia sẻ.', 'error');
+    return;
+  }
+
+  const preview = buildPreviewStructure();
+  preview.classList.add('shared-card-preview');
+  updatePreviewContent(preview, cardData);
+  cardSlot.appendChild(preview);
+
+  const shareUrl = window.location.href;
+  urlInput.value = shareUrl;
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await copyToClipboard(shareUrl);
+      setFeedback(feedbackEl, 'Đã sao chép liên kết chia sẻ vào clipboard!', 'success');
+    } catch (error) {
+      console.error('Không thể sao chép liên kết', error);
+      setFeedback(feedbackEl, 'Không thể sao chép liên kết, hãy thử thủ công.', 'error');
+    }
+  });
+
+  downloadBtn.addEventListener('click', async () => {
+    try {
+      await downloadCardAsImage(cardData, preview);
+      setFeedback(feedbackEl, 'Ảnh danh thiếp đã được tải xuống.', 'success');
+    } catch (error) {
+      console.error('Không thể tải ảnh danh thiếp', error);
+      setFeedback(feedbackEl, 'Không thể tải ảnh danh thiếp. Vui lòng thử lại.', 'error');
+    }
+  });
+
+  if (window.QRious) {
+    // eslint-disable-next-line no-new
+    new window.QRious({
+      element: qrCanvas,
+      value: shareUrl,
+      size: 220,
+      level: 'H',
+    });
+  } else {
+    const fallback = document.createElement('p');
+    fallback.textContent = 'Không thể tạo mã QR (thiếu thư viện QRious).';
+    fallback.className = 'share-qr-fallback';
+    qrCanvas.replaceWith(fallback);
+  }
+
+  setFeedback(feedbackEl, '');
+
+  if (expiryNoteEl) {
+    if (expiresAt) {
+      const formattedExpiry = formatExpiryTimestamp(expiresAt);
+      const ownerNote = owner ? `Danh thiếp được chia sẻ bởi ${owner}.` : 'Danh thiếp được lưu trên đám mây.';
+      expiryNoteEl.textContent = formattedExpiry
+        ? `${ownerNote} Liên kết sẽ hết hạn vào ${formattedExpiry}.`
+        : `${ownerNote} Liên kết có thể hết hạn trong thời gian ngắn.`;
+    } else if (owner) {
+      expiryNoteEl.textContent = `Danh thiếp được chia sẻ bởi ${owner}.`;
+    } else {
+      expiryNoteEl.textContent = 'Quét mã QR hoặc sao chép liên kết để chia sẻ danh thiếp.';
     }
   }
 }
@@ -1699,9 +2360,13 @@ function initLoadingAnimation() {
 updateProfileFromStorage();
 initConfigForm();
 window.addEventListener('DOMContentLoaded', () => {
+  initThemeManager();
   initAuthPlatform();
   initCardBuilder();
   initCardsLibrary();
-  initSharedCardModal();
+  shareModalController = initSharedCardModal();
+  initSharePage().catch((error) => {
+    console.error('Không thể khởi tạo trang chia sẻ', error);
+  });
+  initLoadingAnimation();
 });
-initLoadingAnimation();

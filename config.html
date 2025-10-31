@@ -8,10 +8,27 @@
     <link rel="icon" type="image/x-icon" href="./icon/thumb-344733.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://fonts.bunny.net/css?family=abeezee:400|annie-use-your-telescope:400" rel="stylesheet" />
+    <script src="app-config.js" defer></script>
     <script src="imnguyweb.js" defer></script>
 </head>
-<body class="config-page">
+<body class="config-page" data-theme="blossom">
     <div class="config-wrapper">
+        <div class="config-controls">
+            <div class="toggle-container">
+                <button class="toggle-button" id="dark-mode-toggle" aria-label="Toggle dark mode">
+                    <i id="dark-icon" class="fas fa-moon"></i>
+                </button>
+            </div>
+            <div class="theme-selector">
+                <label class="visually-hidden" for="theme-select">Chọn chủ đề màu sắc</label>
+                <select id="theme-select" aria-label="Chọn chủ đề màu sắc">
+                    <option value="blossom">Sắc Hồng</option>
+                    <option value="ocean">Biển Xanh</option>
+                    <option value="forest">Xanh Lá</option>
+                    <option value="sunset">Hoàng Hôn</option>
+                </select>
+            </div>
+        </div>
         <a class="back-link" href="index.html">
             <i class="fas fa-arrow-left"></i>
             Trở về trang chính

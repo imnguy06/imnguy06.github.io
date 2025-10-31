@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Danh thiếp của tôi" />
-    <meta property="og:description" content="Quản lý và chia sẻ danh thiếp đã lưu" />
-    <meta property="og:url" content="https://imnguy06.github.io/cards.html" />
-    <title>Danh thiếp của tôi</title>
+    <meta property="og:title" content="Danh thiếp được chia sẻ" />
+    <meta property="og:description" content="Xem và tải danh thiếp được chia sẻ" />
+    <meta property="og:url" content="https://imnguy06.github.io/share.html" />
+    <title>Danh thiếp được chia sẻ</title>
     <link rel="stylesheet" type="text/css" href="imnguyweb.css">
     <link rel="icon" type="image/x-icon" href="./icon/thumb-344733.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -17,12 +17,12 @@
     <script src="app-config.js" defer></script>
     <script src="imnguyweb.js" defer></script>
 </head>
-<body data-page="cards" data-theme="blossom">
+<body data-page="share" data-theme="blossom">
     <div class="loading-page">
         <i class="fas fa-spinner fa-spin loading-icon" aria-hidden="true"></i>
         <span class="visually-hidden">Đang tải nội dung</span>
     </div>
-    <div class="container hidden cards-container">
+    <div class="container hidden share-container" id="share-container">
         <div class="header-actions">
             <div class="header-controls">
                 <div class="toggle-container">
@@ -45,25 +45,32 @@
                     <i class="fas fa-pen" aria-hidden="true"></i>
                     Tạo danh thiếp mới
                 </a>
-                <div class="session-info hidden" id="session-info">
-                    <span class="session-username" id="session-username" aria-live="polite"></span>
-                    <button class="danger-button" type="button" id="logout-button">Đăng xuất</button>
-                </div>
             </div>
         </div>
-        <section class="saved-cards" id="cards-library">
-            <h2>Danh thiếp của bạn</h2>
-            <p class="cards-subtitle">Quản lý, chia sẻ, tải ảnh và chỉnh sửa danh thiếp đã lưu.</p>
-            <p class="card-feedback" id="cards-feedback" role="status" aria-live="polite"></p>
-            <div class="saved-cards-list" id="saved-cards-list"></div>
+        <section class="share-layout" id="share-page-content">
+            <div class="share-preview-wrapper">
+                <div class="share-preview" id="share-card-slot" aria-live="polite"></div>
+            </div>
+            <aside class="share-side-panel">
+                <h2>Chia sẻ danh thiếp</h2>
+                <p class="share-expiry-note" id="share-expiry-note"></p>
+                <p class="card-feedback" id="share-feedback" role="status" aria-live="polite"></p>
+                <div class="share-link-group">
+                    <label for="share-page-url">Liên kết danh thiếp</label>
+                    <div class="share-link-row">
+                        <input type="text" id="share-page-url" readonly>
+                        <button class="secondary-button" type="button" id="share-page-copy">Sao chép</button>
+                    </div>
+                </div>
+                <div class="share-qr-group">
+                    <h3>QR Code</h3>
+                    <canvas id="share-page-qr" aria-label="Mã QR danh thiếp"></canvas>
+                </div>
+                <div class="share-actions">
+                    <button class="primary-button" type="button" id="share-page-download">Tải ảnh danh thiếp</button>
+                </div>
+            </aside>
         </section>
-    </div>
-    <div id="shared-card-modal" class="modal hidden" role="dialog" aria-modal="true">
-        <div class="modal-content">
-            <button class="modal-close" id="close-shared-card" aria-label="Đóng">&times;</button>
-            <h2>Danh thiếp được chia sẻ</h2>
-            <div class="shared-card" id="shared-card-content"></div>
-        </div>
     </div>
 </body>
 </html>
